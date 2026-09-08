@@ -12,7 +12,10 @@ export type YandexPlayer = {
 };
 
 export type YandexSdk = {
-  features?: { LoadingAPI?: { ready: () => void } };
+  features?: {
+    LoadingAPI?: { ready: () => void };
+    GameplayAPI?: { start: () => void; stop: () => void };
+  };
   environment?: { i18n?: { lang?: string } };
   adv: {
     showFullscreenAdv: (params: {

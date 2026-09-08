@@ -1,6 +1,5 @@
 import {createContext, useEffect, useState} from 'react';
 
-import styles from "./index.module.css";
 import Header from "./header";
 import {Game, Level} from "@/components/Game/Game";
 import {LevelPicker} from "@/components/LevelPicker/LevelPicker";
@@ -146,6 +145,16 @@ export default function Home() {
     } else {
       playMenuMusic();
     }
+    // Tells Yandex Games whether the player is mid-level right now - used for playtime
+    // stats and to gate when the platform considers it safe to interrupt with ads.
+    getYsdk().then((ysdk) => {
+      const gameplay = ysdk?.features?.GameplayAPI;
+      if (inGame) {
+        gameplay?.start();
+      } else {
+        gameplay?.stop();
+      }
+    });
   }, [inGame]);
 
   useEffect(() => {
@@ -202,7 +211,7 @@ export default function Home() {
           {showAuthPrompt ? (
             <AuthPrompt onSignIn={handleSignIn} onDismiss={() => setShowAuthPrompt(false)}/>
           ) : null}
-          <main className={styles.main}>
+          <main>
             {currentScreen === screens.MainMenu ? (
               <MainMenu
                 onStart={() => setCurrentScreen(screens.SelectPack)}

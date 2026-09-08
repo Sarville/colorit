@@ -23,6 +23,7 @@ export const packNames: Record<Language, Record<"Easy" | "Medium" | "Hard" | "Co
 export const translations = {
   ru: {
     title: "Колорит",
+    description: "Колорит — головоломка на закрашивание поля одним цветом за минимум ходов",
     brandName: "КОЛОРИТ",
     start: "Старт",
     selectPack: "Выберите набор",
@@ -58,6 +59,7 @@ export const translations = {
   },
   en: {
     title: "Color It",
+    description: "Color It - a flood-fill puzzle: cover the board in one color using as few moves as possible",
     brandName: "COLOR IT",
     start: "Start",
     selectPack: "Select Pack",
