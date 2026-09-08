@@ -49,3 +49,6 @@ next-env.d.ts
 /levels/Medium.ts
 /levels/Hard.ts
 /levels/Community.ts
+
+# scratch/output files not meant to be committed
+/tmp

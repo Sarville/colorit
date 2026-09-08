@@ -1,7 +1,7 @@
 import {useCallback, useContext, useEffect, useState} from "react";
 import {Color, Modifier, Square, SquareProps} from "../Square/Square";
 import styles from "./Game.module.css";
-import {LevelContext, levels, screens} from "@/pages";
+import {LevelContext, levels, levelOptimal, screens} from "@/pages";
 import {MessageModal} from "@/components/MessageModal/MessageModal";
 import {levelStatus} from "@/levels/levelsUtils";
 import {useLanguage} from "@/i18n/LanguageContext";
@@ -207,7 +207,10 @@ const updateGame = function (x: number, y: number, gameState: Level) {
 
 
 export function Game() {
-  const {levelNumber, changeLevelNumber, levelProgress, changeLevelProgress, pack, changeCurrentScreen} = useContext(
+  const {
+    levelNumber, changeLevelNumber, levelProgress, changeLevelProgress, pack, changeCurrentScreen,
+    changeLastExitedLevel, openSettings,
+  } = useContext(
     LevelContext
   );
   const [moves, setMoves] = useState(0);
@@ -250,11 +253,18 @@ export function Game() {
     }
   }, [gameIsWon, levelProgress, levelNumber, moves, changeLevelProgress, pack]);
 
+  function goHome() {
+    setGameIsWon(false)
+    changeLastExitedLevel(levelNumber)
+    changeCurrentScreen(screens.SelectLevel)
+  }
+
   function incrementLevelNumber() {
     // Unset gameIsWon before changing level, so we don't accidentally mark the level as complete
     // when the new game is loaded before gameIsWon is recalculated
     setGameIsWon(false)
     if (levelNumber + 1 === levels[pack].length) {
+      changeLastExitedLevel(levelNumber)
       changeCurrentScreen(screens.SelectLevel)
     } else {
       changeLevelNumber(levelNumber + 1)
@@ -264,6 +274,7 @@ export function Game() {
   function decrementLevelNumber() {
     setGameIsWon(false)
     if (levelNumber === 0) {
+      changeLastExitedLevel(levelNumber)
       changeCurrentScreen(screens.SelectLevel)
     } else {
       changeLevelNumber(levelNumber - 1)
@@ -289,23 +300,44 @@ export function Game() {
     })
   })
 
+  const best = levelProgress[pack][levelNumber].best;
+  const optimal = levelOptimal[pack][levelNumber];
+
   return (
-    <>
-      {gameIsWon ? <MessageModal onClick={incrementLevelNumber} message={"complete"}/> : null}
-      {levelProgress[pack][levelNumber].status === "locked" ? <MessageModal onClick={undefined} message={"locked"}/> : null}
+    <div className={styles.page}>
       <div className={styles.header}>
-        <div className={styles.headerContent}>
-          <button onClick={() => { playClick(); decrementLevelNumber(); }} className={styles.previous}></button>
-          <button onClick={() => { playClick(); handleReset(); }} className={styles.reset}></button>
-          <div className={styles.headerProgress}>
-            <p>{t("current")}: {moves}</p>
-            <p>{t("best")}: {levelProgress[pack][levelNumber].best}</p>
+        <div className={styles.navRow}>
+          <button onClick={() => { playClick(); decrementLevelNumber(); }} className={`${styles.navButton} ${styles.previous}`}></button>
+          <div className={styles.centerColumn}>
+            <p className={styles.levelLabel}>{t("level")} {levelNumber + 1}</p>
+            <div className={styles.iconRow}>
+              <button onClick={() => { playClick(); goHome(); }} className={styles.home}></button>
+              <button onClick={() => { playClick(); handleReset(); }} className={styles.reset}></button>
+              <button onClick={() => { playClick(); openSettings(); }} className={styles.settings}></button>
+            </div>
           </div>
-          <button onClick={() => { playClick(); changeCurrentScreen(screens.SelectLevel); }} className={styles.home}></button>
-          <button onClick={() => { playClick(); incrementLevelNumber(); }} className={styles.next}></button>
+          <button onClick={() => { playClick(); incrementLevelNumber(); }} className={`${styles.navButton} ${styles.next}`}></button>
+        </div>
+        <div className={styles.stats}>
+          <div className={styles.statColumn}>
+            <span className={styles.statLabel}>{t("moves")}</span>
+            <span className={styles.statValue}>{moves}</span>
+          </div>
+          <div className={styles.statsRight}>
+            <div className={styles.statColumn}>
+              <span className={styles.statLabel}>{t("best")}</span>
+              <span className={styles.statValue}>{best ?? "-"}</span>
+            </div>
+            <div className={styles.statColumn}>
+              <span className={styles.statLabel}>{t("optimal")}</span>
+              <span className={styles.statValue}>{optimal ?? "-"}</span>
+            </div>
+          </div>
         </div>
       </div>
       <div className={styles.level}>
+        {gameIsWon ? <MessageModal onClick={incrementLevelNumber} message={"complete"}/> : null}
+        {levelProgress[pack][levelNumber].status === "locked" ? <MessageModal onClick={undefined} message={"locked"}/> : null}
         <div className={styles.gameBoard}>
           {game.map((row, index) => (
             <div key={index} className={styles.row}>
@@ -316,6 +348,6 @@ export function Game() {
           ))}
         </div>
       </div>
-    </>
+    </div>
   );
 }

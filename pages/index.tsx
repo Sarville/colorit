@@ -8,10 +8,10 @@ import {Settings} from "@/components/Settings/Settings";
 import {MainMenu} from "@/components/MainMenu/MainMenu";
 import {Tutorial} from "@/components/Tutorial/Tutorial";
 import {AuthPrompt} from "@/components/AuthPrompt/AuthPrompt";
-import {EasyLevels, EasyDefaultProgress} from "@/levels/Easy";
-import {MediumLevels, MediumDefaultProgress} from "@/levels/Medium";
-import {HardLevels, HardDefaultProgress} from "@/levels/Hard";
-import {CommunityLevels, CommunityDefaultProgress} from "@/levels/Community";
+import {EasyLevels, EasyDefaultProgress, EasyOptimal} from "@/levels/Easy";
+import {MediumLevels, MediumDefaultProgress, MediumOptimal} from "@/levels/Medium";
+import {HardLevels, HardDefaultProgress, HardOptimal} from "@/levels/Hard";
+import {CommunityLevels, CommunityDefaultProgress, CommunityOptimal} from "@/levels/Community";
 import {levelProgressProps, packChoices} from "@/levels/levelsUtils";
 import {SelectPack} from "@/components/SelectPack/SelectPack";
 import {LanguageProvider} from "@/i18n/LanguageContext";
@@ -58,6 +58,22 @@ export const levelProgressDefault: levelPackProgressProps = {
   "Community": CommunityDefaultProgress,
 }
 
+type levelOptimalProps = {
+  "Easy": Array<number | null>,
+  "Medium": Array<number | null>,
+  "Hard": Array<number | null>,
+  "Community": Array<number | null>,
+}
+
+// Minimum move count per level, parsed from the level pack's `solution` attribute at build time -
+// used to show "Optimal: N" and to award the star badge when a level is solved in that many moves.
+export const levelOptimal: levelOptimalProps = {
+  "Easy": EasyOptimal,
+  "Medium": MediumOptimal,
+  "Hard": HardOptimal,
+  "Community": CommunityOptimal,
+}
+
 // TODO
 //  Update game screen one square at a time so you get a nice flow, e.g. medium 47
 //  Jest tests
@@ -75,6 +91,9 @@ export const LevelContext = createContext({
   changeLevelProgress: (_levelProgress: levelPackProgressProps) => {},
   pack: defaultPack,
   changePack: (_pack: packChoices) => {},
+  lastExitedLevel: null as number | null,
+  changeLastExitedLevel: (_level: number | null) => {},
+  openSettings: () => {},
 });
 
 export default function Home() {
@@ -85,6 +104,8 @@ export default function Home() {
   const [pack, setPack] = useState<packChoices>(defaultPack)
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [lastExitedLevel, setLastExitedLevel] = useState<number | null>(null);
+  const [screenBeforeSettings, setScreenBeforeSettings] = useState(screens.MainMenu);
 
   useEffect(() => {
     loadProgress<levelPackProgressProps>().then((progress) => {
@@ -150,6 +171,15 @@ export default function Home() {
     setPack(() => pack)
   }
 
+  function changeLastExitedLevel(level: number | null) {
+    setLastExitedLevel(level)
+  }
+
+  function openSettings() {
+    setScreenBeforeSettings(currentScreen)
+    setCurrentScreen(screens.Settings)
+  }
+
   return (
     <LanguageProvider>
       <ColorSchemeProvider>
@@ -163,6 +193,9 @@ export default function Home() {
             // @ts-ignore
             pack,
             changePack,
+            lastExitedLevel,
+            changeLastExitedLevel,
+            openSettings,
           }}
         >
           <Header/>
@@ -173,7 +206,7 @@ export default function Home() {
             {currentScreen === screens.MainMenu ? (
               <MainMenu
                 onStart={() => setCurrentScreen(screens.SelectPack)}
-                onSettings={() => setCurrentScreen(screens.Settings)}
+                onSettings={openSettings}
                 showSignIn={signedIn === false}
                 onSignIn={handleSignIn}
               />
@@ -184,7 +217,7 @@ export default function Home() {
             {currentScreen === screens.Settings ? (
               <Settings
                 onOpenTutorial={() => setCurrentScreen(screens.Tutorial)}
-                onClose={() => setCurrentScreen(screens.MainMenu)}
+                onClose={() => setCurrentScreen(screenBeforeSettings)}
               />
             ) : null}
             {currentScreen === screens.Tutorial ? (

@@ -70,6 +70,14 @@ export function Tutorial({onClose}: { onClose: () => void }) {
             <p>{t("fillsOneDirection")}</p>
           </div>
           <div className={styles.specialRow}>
+            <div className={styles.icon}><Square color={Color.blue} targetColor={Color.none} modifier={Modifier.rotateRight}/></div>
+            <p>{t("fillsRotating")}</p>
+          </div>
+          <div className={styles.specialRow}>
+            <div className={styles.icon}><Square color={Color.blue} targetColor={Color.none} modifier={Modifier.bomb}/></div>
+            <p>{t("fillsBomb")}</p>
+          </div>
+          <div className={styles.specialRow}>
             <div className={styles.icon}><Square color={Color.blue} targetColor={Color.none} modifier={Modifier.circle}/></div>
             <p>{t("fillsAllAround")}</p>
           </div>

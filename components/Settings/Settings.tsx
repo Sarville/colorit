@@ -1,10 +1,10 @@
-import {useState} from "react";
+import {ChangeEvent, useState} from "react";
 import {useLanguage} from "@/i18n/LanguageContext";
 import {Language} from "@/i18n/translations";
 import {useColorScheme} from "@/theme/ColorSchemeContext";
 import {Color, getColorHex} from "@/components/Square/Square";
-import {isSoundEnabled, playClick, setSoundEnabled} from "@/lib/sound";
-import {isMusicEnabled, setMusicEnabled} from "@/lib/music";
+import {getSoundVolume, isSoundEnabled, playClick, setSoundEnabled, setSoundVolume} from "@/lib/sound";
+import {getMusicVolume, isMusicEnabled, setMusicEnabled, setMusicVolume} from "@/lib/music";
 import {MusicOffIcon, MusicOnIcon, SoundOffIcon, SoundOnIcon} from "@/components/Settings/icons";
 import styles from "./Settings.module.css";
 
@@ -18,6 +18,8 @@ export function Settings({onOpenTutorial, onClose}: { onOpenTutorial: () => void
   const {scheme, cycleScheme} = useColorScheme();
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [musicOn, setMusicOn] = useState(isMusicEnabled());
+  const [soundVolume, setSoundVolumeState] = useState(getSoundVolume());
+  const [musicVolume, setMusicVolumeState] = useState(getMusicVolume());
 
   function toggleSound() {
     const next = !soundOn;
@@ -33,6 +35,18 @@ export function Settings({onOpenTutorial, onClose}: { onOpenTutorial: () => void
     const next = !musicOn;
     setMusicEnabled(next);
     setMusicOn(next);
+  }
+
+  function handleSoundVolumeChange(e: ChangeEvent<HTMLInputElement>) {
+    const value = Number(e.target.value);
+    setSoundVolumeState(value);
+    setSoundVolume(value);
+  }
+
+  function handleMusicVolumeChange(e: ChangeEvent<HTMLInputElement>) {
+    const value = Number(e.target.value);
+    setMusicVolumeState(value);
+    setMusicVolume(value);
   }
 
   function toggleLanguage() {
@@ -65,6 +79,14 @@ export function Settings({onOpenTutorial, onClose}: { onOpenTutorial: () => void
           {soundOn ? <SoundOnIcon className={styles.iconSvg}/> : <SoundOffIcon className={styles.iconSvg}/>}
         </span>
       </div>
+      <div className={styles.sliderRow}>
+        <input
+          type="range" min={0} max={100} value={soundVolume}
+          onChange={handleSoundVolumeChange}
+          className={styles.slider}
+          aria-label={t("sound")}
+        />
+      </div>
 
       <div className={styles.row}>
         <div className={styles.selector}>
@@ -73,6 +95,14 @@ export function Settings({onOpenTutorial, onClose}: { onOpenTutorial: () => void
         <span className={styles.icon} onClick={toggleMusic}>
           {musicOn ? <MusicOnIcon className={styles.iconSvg}/> : <MusicOffIcon className={styles.iconSvg}/>}
         </span>
+      </div>
+      <div className={styles.sliderRow}>
+        <input
+          type="range" min={0} max={100} value={musicVolume}
+          onChange={handleMusicVolumeChange}
+          className={styles.slider}
+          aria-label={t("music")}
+        />
       </div>
 
       <div className={styles.row}>

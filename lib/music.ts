@@ -1,4 +1,6 @@
 const STORAGE_KEY = "musicEnabled";
+const VOLUME_KEY = "musicVolume";
+const DEFAULT_VOLUME = 60;
 
 const MENU_TRACK = "./sounds/music/menu.mp3";
 const GAME_TRACKS = [
@@ -34,9 +36,30 @@ export function unsuppressMusic() {
 // interaction, whatever form it takes, is never missed.
 const UNLOCK_EVENTS = ["pointerdown", "touchstart", "touchend", "click", "keydown"] as const;
 
+// 0-100, persisted separately from the on/off toggle below.
+export function getMusicVolume(): number {
+  if (typeof window === "undefined") {
+    return DEFAULT_VOLUME;
+  }
+  const raw = localStorage.getItem(VOLUME_KEY);
+  if (raw === null) {
+    return DEFAULT_VOLUME;
+  }
+  const stored = Number(raw);
+  return stored >= 0 && stored <= 100 ? stored : DEFAULT_VOLUME;
+}
+
+export function setMusicVolume(volume: number) {
+  localStorage.setItem(VOLUME_KEY, String(volume));
+  if (audio) {
+    audio.volume = volume / 100;
+  }
+}
+
 function getAudio(): HTMLAudioElement {
   if (!audio) {
     audio = new Audio();
+    audio.volume = getMusicVolume() / 100;
     audio.addEventListener("ended", playNext);
     // The very first play() before any interaction happens muted (below) so it's already
     // running the instant the tap arrives - this listener just unmutes and, as a fallback,

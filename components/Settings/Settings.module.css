@@ -68,6 +68,42 @@
     display: inline-block;
 }
 
+.sliderRow {
+    margin-top: 10px;
+    padding: 0 4px;
+}
+
+.slider {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: #b8c9ee;
+    outline: none;
+    margin: 0;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: cornflowerblue;
+    cursor: pointer;
+    border: none;
+}
+
+.slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: cornflowerblue;
+    cursor: pointer;
+    border: none;
+}
+
 .backRow {
     margin-top: 40px;
 }

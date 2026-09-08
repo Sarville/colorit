@@ -1,11 +1,9 @@
 .modal {
-  /* Put the blockout below the header so game screen is blocked but
-  the previous, next, rest and home buttons are available  */
-  margin-top: 100px;
-  position: fixed;
+  /* Absolutely positioned within Game's .level (position:relative), which covers only the
+  board area below the header - so the header's controls stay reachable while this blocks it. */
+  position: absolute;
+  inset: 0;
   z-index: 999;
-  width: 100%;
-  height: 100%;
   background-color: #00000010; /* Black with opacity */
 }
 .modalBanner {
