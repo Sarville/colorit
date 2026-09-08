@@ -1,0 +1,49 @@
+.modal {
+    position: fixed;
+    z-index: 999;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #00000060;
+    padding: 2rem;
+    box-sizing: border-box;
+}
+
+.dialog {
+    background-color: #333333;
+    color: #FFFFFF;
+    max-width: 400px;
+    width: 100%;
+    padding: 2rem;
+    text-align: center;
+}
+
+.dialog p {
+    font-size: 20px;
+    margin-top: 0;
+}
+
+.support, .dismiss {
+    width: 100%;
+    height: 50px;
+    font-size: 18px;
+    border: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 12px;
+}
+
+.support {
+    background-color: cornflowerblue;
+    color: #FFFFFF;
+}
+
+.support:disabled {
+    opacity: 0.6;
+}
+
+.dismiss {
+    background-color: transparent;
+    color: #FFFFFF;
+}

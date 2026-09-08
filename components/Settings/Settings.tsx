@@ -13,7 +13,11 @@ const previewLayout: Array<Array<Color>> = [
   [Color.green, Color.blue, Color.indigo],
 ];
 
-export function Settings({onOpenTutorial, onClose}: { onOpenTutorial: () => void, onClose: () => void }) {
+export function Settings({onOpenTutorial, onClose, onSupportAuthor}: {
+  onOpenTutorial: () => void,
+  onClose: () => void,
+  onSupportAuthor: () => void,
+}) {
   const {language, setLanguage, t} = useLanguage();
   const {scheme, cycleScheme} = useColorScheme();
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
@@ -123,6 +127,12 @@ export function Settings({onOpenTutorial, onClose}: { onOpenTutorial: () => void
       <div className={styles.row}>
         <div className={styles.selector}>
           <button onClick={handleOpenTutorial}>{t("tutorial")}</button>
+        </div>
+      </div>
+
+      <div className={styles.row}>
+        <div className={styles.selector}>
+          <button onClick={() => { playClick(); onSupportAuthor(); }}>{t("supportAuthor")}</button>
         </div>
       </div>
 

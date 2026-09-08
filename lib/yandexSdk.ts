@@ -29,6 +29,19 @@ export type YandexSdk = {
   };
   auth?: { openAuthDialog: () => Promise<void> };
   getPlayer: (options?: { scopes?: boolean }) => Promise<YandexPlayer>;
+  getPayments: (options?: { signed?: boolean }) => Promise<YandexPayments>;
+};
+
+export type YandexPurchase = {
+  productID: string;
+  purchaseToken: string;
+  developerPayload?: string;
+};
+
+export type YandexPayments = {
+  purchase: (options: { id: string; developerPayload?: string }) => Promise<YandexPurchase>;
+  getPurchases: () => Promise<Array<YandexPurchase>>;
+  consumePurchase: (purchaseToken: string) => Promise<void>;
 };
 
 let ysdkPromise: Promise<YandexSdk | null> | null = null;

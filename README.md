@@ -36,6 +36,10 @@ yarn next export
 
 This will create an `out` directory with static files that can be hosted (e.g. On GitHub pages or Amazon S3) to create the site.
 
+VK Games doesn't accept a zip upload - its developer cabinet only takes an iframe URL, so `out/`
+needs to be hosted somewhere with HTTPS (GitHub Pages works) and that URL entered as the app's
+"Адрес iframe" at vk.com/dev (app platform "Встраиваемое приложение", type "Игра").
+
 If you have docker available and want a quick preview of the site, you can run
 ```bash
 cd out

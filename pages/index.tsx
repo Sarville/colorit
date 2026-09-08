@@ -7,6 +7,7 @@ import {Settings} from "@/components/Settings/Settings";
 import {MainMenu} from "@/components/MainMenu/MainMenu";
 import {Tutorial} from "@/components/Tutorial/Tutorial";
 import {AuthPrompt} from "@/components/AuthPrompt/AuthPrompt";
+import {SupportAuthorModal} from "@/components/SupportAuthor/SupportAuthorModal";
 import {EasyLevels, EasyDefaultProgress, EasyOptimal} from "@/levels/Easy";
 import {MediumLevels, MediumDefaultProgress, MediumOptimal} from "@/levels/Medium";
 import {HardLevels, HardDefaultProgress, HardOptimal} from "@/levels/Hard";
@@ -16,9 +17,11 @@ import {SelectPack} from "@/components/SelectPack/SelectPack";
 import {LanguageProvider} from "@/i18n/LanguageContext";
 import {ColorSchemeProvider} from "@/theme/ColorSchemeContext";
 import {getYsdk} from "@/lib/yandexSdk";
+import {initVkBridge, isVkEnvironment} from "@/lib/vkSdk";
 import {playGameMusic, playMenuMusic} from "@/lib/music";
 import {loadProgress, saveProgress} from "@/lib/cloudSave";
 import {isSignedIn, openAuthDialog} from "@/lib/yandexAuth";
+import {isAdsDisabled, purchaseSupportAuthor, restoreYandexPurchases} from "@/lib/support";
 
 export const enum screens {
   MainMenu = "MainMenu",
@@ -95,7 +98,14 @@ export const LevelContext = createContext({
   openSettings: () => {},
 });
 
+// Set only for the games.sarville.online/vk build - VK's own hosting (vk.com/app<id>) already
+// guarantees VK-only access, but a self-hosted iframe URL is a public link like any other, so
+// this build refuses to render outside a real VK launch (see isVkEnvironment) instead of relying
+// on VK's platform boundary.
+const REQUIRE_VK = process.env.NEXT_PUBLIC_REQUIRE_VK === "true";
+
 export default function Home() {
+  const [vkRequiredButMissing, setVkRequiredButMissing] = useState(false);
   const [progressLoaded, setProgressLoaded] = useState(false)
   const [currentScreen, setCurrentScreen] = useState(screens.MainMenu)
   const [levelNumber, setLevelNumber] = useState(0);
@@ -105,6 +115,8 @@ export default function Home() {
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [lastExitedLevel, setLastExitedLevel] = useState<number | null>(null);
   const [screenBeforeSettings, setScreenBeforeSettings] = useState(screens.MainMenu);
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [adsDisabled, setAdsDisabled] = useState(false);
 
   useEffect(() => {
     loadProgress<levelPackProgressProps>().then((progress) => {
@@ -119,6 +131,14 @@ export default function Home() {
 
   useEffect(() => {
     getYsdk().then((ysdk) => ysdk?.features?.LoadingAPI?.ready());
+    initVkBridge();
+    if (REQUIRE_VK && !isVkEnvironment()) {
+      setVkRequiredButMissing(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    restoreYandexPurchases().then(() => isAdsDisabled()).then(setAdsDisabled);
   }, []);
 
   useEffect(() => {
@@ -184,9 +204,23 @@ export default function Home() {
     setLastExitedLevel(level)
   }
 
+  async function handleSupportAuthor() {
+    if (await purchaseSupportAuthor()) {
+      setAdsDisabled(true);
+    }
+  }
+
   function openSettings() {
     setScreenBeforeSettings(currentScreen)
     setCurrentScreen(screens.Settings)
+  }
+
+  if (vkRequiredButMissing) {
+    return (
+      <main style={{display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", textAlign: "center", padding: "2rem"}}>
+        <p>Эта игра открывается только внутри ВКонтакте.</p>
+      </main>
+    );
   }
 
   return (
@@ -211,6 +245,13 @@ export default function Home() {
           {showAuthPrompt ? (
             <AuthPrompt onSignIn={handleSignIn} onDismiss={() => setShowAuthPrompt(false)}/>
           ) : null}
+          {showSupportModal ? (
+            <SupportAuthorModal
+              adsDisabled={adsDisabled}
+              onSupport={handleSupportAuthor}
+              onClose={() => setShowSupportModal(false)}
+            />
+          ) : null}
           <main>
             {currentScreen === screens.MainMenu ? (
               <MainMenu
@@ -227,6 +268,7 @@ export default function Home() {
               <Settings
                 onOpenTutorial={() => setCurrentScreen(screens.Tutorial)}
                 onClose={() => setCurrentScreen(screenBeforeSettings)}
+                onSupportAuthor={() => setShowSupportModal(true)}
               />
             ) : null}
             {currentScreen === screens.Tutorial ? (

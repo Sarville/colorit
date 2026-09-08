@@ -56,6 +56,12 @@ export const translations = {
     signInPrompt: "Войдите через Яндекс ID, чтобы сохранять прогресс в облаке",
     signIn: "Войти",
     notNow: "Не сейчас",
+    supportAuthor: "Поддержать автора",
+    supportBeforeText: "Нравится игра? Поддержите разработку — после этого реклама в игре отключится.",
+    supportAfterText: "Реклама уже отключена — спасибо за поддержку! Если хотите, можно поддержать ещё раз.",
+    supportButton: "Поддержать",
+    supportAgainButton: "Поддержать ещё раз",
+    close: "Закрыть",
   },
   en: {
     title: "Color It",
@@ -92,6 +98,12 @@ export const translations = {
     signInPrompt: "Sign in with Yandex ID to save your progress to the cloud",
     signIn: "Sign in",
     notNow: "Not now",
+    supportAuthor: "Support the author",
+    supportBeforeText: "Enjoying the game? Support its development — this also turns off ads.",
+    supportAfterText: "Ads are already off — thanks for your support! You're welcome to support again if you'd like.",
+    supportButton: "Support",
+    supportAgainButton: "Support again",
+    close: "Close",
   },
 } satisfies Record<Language, Record<string, string>>;
 
