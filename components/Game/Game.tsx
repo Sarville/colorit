@@ -4,6 +4,9 @@ import styles from "./Game.module.css";
 import {LevelContext, levels, screens} from "@/pages";
 import {MessageModal} from "@/components/MessageModal/MessageModal";
 import {levelStatus} from "@/levels/levelsUtils";
+import {useLanguage} from "@/i18n/LanguageContext";
+import {maybeShowLevelCompleteAd} from "@/lib/ads";
+import {playClick, playWon} from "@/lib/sound";
 
 export type Level = Array<Array<SquareProps>>;
 
@@ -210,6 +213,14 @@ export function Game() {
   const [moves, setMoves] = useState(0);
   const [game, setGame] = useState(loadLevel(levels[pack][levelNumber]));
   const [gameIsWon, setGameIsWon] = useState(false);
+  const {t} = useLanguage();
+
+  useEffect(() => {
+    if (gameIsWon) {
+      playWon();
+      maybeShowLevelCompleteAd();
+    }
+  }, [gameIsWon]);
 
   const handleReset = useCallback(() => {
     setGameIsWon(false)
@@ -261,6 +272,7 @@ export function Game() {
 
   function onClick(x: number, y: number) {
     if (game[x][y].modifier !== Modifier.none) {
+      playClick()
       setMoves(moves => moves + 1)
       setGame(game => {
         const newState = updateGame(x, y, game);
@@ -283,14 +295,14 @@ export function Game() {
       {levelProgress[pack][levelNumber].status === "locked" ? <MessageModal onClick={undefined} message={"locked"}/> : null}
       <div className={styles.header}>
         <div className={styles.headerContent}>
-          <button onClick={decrementLevelNumber} className={styles.previous}></button>
-          <button onClick={handleReset} className={styles.reset}></button>
+          <button onClick={() => { playClick(); decrementLevelNumber(); }} className={styles.previous}></button>
+          <button onClick={() => { playClick(); handleReset(); }} className={styles.reset}></button>
           <div className={styles.headerProgress}>
-            <p>Current: {moves}</p>
-            <p>Best: {levelProgress[pack][levelNumber].best}</p>
+            <p>{t("current")}: {moves}</p>
+            <p>{t("best")}: {levelProgress[pack][levelNumber].best}</p>
           </div>
-          <button onClick={() => changeCurrentScreen(screens.SelectLevel)} className={styles.home}></button>
-          <button onClick={incrementLevelNumber} className={styles.next}></button>
+          <button onClick={() => { playClick(); changeCurrentScreen(screens.SelectLevel); }} className={styles.home}></button>
+          <button onClick={() => { playClick(); incrementLevelNumber(); }} className={styles.next}></button>
         </div>
       </div>
       <div className={styles.level}>

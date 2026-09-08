@@ -1,0 +1,86 @@
+export type Language = "ru" | "en";
+
+export const languageNames: Record<Language, string> = {
+  ru: "Русский",
+  en: "English",
+};
+
+export const packNames: Record<Language, Record<"Easy" | "Medium" | "Hard" | "Community", string>> = {
+  ru: {
+    Easy: "Лёгкий",
+    Medium: "Средний",
+    Hard: "Сложный",
+    Community: "Сообщество",
+  },
+  en: {
+    Easy: "Easy",
+    Medium: "Medium",
+    Hard: "Hard",
+    Community: "Community",
+  },
+};
+
+export const translations = {
+  ru: {
+    title: "Flowit",
+    start: "Старт",
+    selectPack: "Выберите набор",
+    selectLevel: "Выберите уровень",
+    current: "Текущий",
+    best: "Лучший",
+    levelComplete: "Уровень пройден",
+    tapToContinue: "Нажмите, чтобы продолжить",
+    lockedLine1: "Сначала пройдите",
+    lockedLine2: "другие",
+    lockedLine3: "уровни",
+    settings: "Настройки",
+    sound: "Звук",
+    music: "Музыка",
+    colors: "Цвета",
+    tutorial: "Обучение",
+    language: "Язык",
+    back: "Назад",
+    howToPlay: "Как играть в",
+    fillAllBoxes: "Закрасьте все клетки в цвет их рамки",
+    specialBoxes: "Особые клетки:",
+    fillsOneDirection: "Красит в одну сторону",
+    fillsAllAround: "Красит всё вокруг",
+    tutorialClose: "Понятно",
+    yandexId: "Войти в Яндекс ID",
+    signInPrompt: "Войдите через Яндекс ID, чтобы сохранять прогресс в облаке",
+    signIn: "Войти",
+    notNow: "Не сейчас",
+  },
+  en: {
+    title: "Flowit",
+    start: "Start",
+    selectPack: "Select Pack",
+    selectLevel: "Select Level",
+    current: "Current",
+    best: "Best",
+    levelComplete: "Level Complete",
+    tapToContinue: "Tap to continue",
+    lockedLine1: "Complete",
+    lockedLine2: "others",
+    lockedLine3: "first",
+    settings: "Settings",
+    sound: "Sound",
+    music: "Music",
+    colors: "Colors",
+    tutorial: "Tutorial",
+    language: "Language",
+    back: "Back",
+    howToPlay: "How to play",
+    fillAllBoxes: "Fill all boxes with the color of their border",
+    specialBoxes: "Special boxes:",
+    fillsOneDirection: "Fills in one direction",
+    fillsAllAround: "Fills all around it",
+    tutorialClose: "Got it",
+    yandexId: "Sign in with Yandex ID",
+    signInPrompt: "Sign in with Yandex ID to save your progress to the cloud",
+    signIn: "Sign in",
+    notNow: "Not now",
+  },
+} satisfies Record<Language, Record<string, string>>;
+
+export type TranslationKey = keyof typeof translations["ru"];

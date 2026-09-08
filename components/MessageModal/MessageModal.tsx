@@ -1,4 +1,5 @@
 import {MouseEventHandler} from "react";
+import {useLanguage} from "@/i18n/LanguageContext";
 import styles from "./MessageModal.module.css";
 
 
@@ -8,17 +9,18 @@ type MessageModalProps = {
 }
 
 export function MessageModal(props: MessageModalProps) {
+  const {t} = useLanguage();
   let text = <></>
   if (props.message === "locked") {
     text = <div>
-      <p>Complete</p>
-      <p>others</p>
-      <p>first</p>
+      <p>{t("lockedLine1")}</p>
+      <p>{t("lockedLine2")}</p>
+      <p>{t("lockedLine3")}</p>
     </div>
   } else if (props.message === "complete") {
     text = <div>
-      <p>Level Complete</p>
-      <p>Tap to continue</p>
+      <p>{t("levelComplete")}</p>
+      <p>{t("tapToContinue")}</p>
     </div>
   }
   return (

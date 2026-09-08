@@ -1,0 +1,81 @@
+.contentArea {
+    margin: auto;
+    max-width: 768px;
+    padding: 2rem;
+    cursor: pointer;
+}
+
+.title {
+    text-align: right;
+    line-height: 1.1;
+}
+
+.brand {
+    color: cornflowerblue;
+    font-size: 1.3em;
+}
+
+.slide {
+    min-height: 16rem;
+    margin-top: 3rem;
+}
+
+.boardsRow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.board {
+    display: flex;
+    background-color: darkgray;
+    padding: 6px;
+}
+
+.boardColumn {
+    display: flex;
+    flex-direction: column;
+    width: 44px;
+}
+
+.chevron {
+    font-size: 2rem;
+    color: #333333;
+}
+
+.caption {
+    font-size: 22px;
+    text-align: center;
+    text-transform: uppercase;
+    margin-top: 2rem;
+}
+
+.specialRow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 1.5rem;
+}
+
+.icon {
+    flex: 0 0 56px;
+}
+
+.specialRow p {
+    font-size: 20px;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.next {
+    background-color: cornflowerblue;
+    color: #FFFFFF;
+    width: 80%;
+    max-width: 400px;
+    margin-top: 3rem;
+    font-size: 20px;
+    height: 50px;
+    border: none;
+    text-transform: uppercase;
+}
