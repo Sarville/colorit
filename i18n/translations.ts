@@ -22,8 +22,8 @@ export const packNames: Record<Language, Record<"Easy" | "Medium" | "Hard" | "Co
 
 export const translations = {
   ru: {
-    title: "Заливка",
-    brandName: "ЗАЛИВКА",
+    title: "Колорит",
+    brandName: "КОЛОРИТ",
     start: "Старт",
     selectPack: "Выберите набор",
     selectLevel: "Выберите уровень",
@@ -53,8 +53,8 @@ export const translations = {
     notNow: "Не сейчас",
   },
   en: {
-    title: "Flowit",
-    brandName: "FLOW IT!",
+    title: "Color It",
+    brandName: "COLOR IT",
     start: "Start",
     selectPack: "Select Pack",
     selectLevel: "Select Level",
