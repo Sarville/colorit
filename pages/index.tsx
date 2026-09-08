@@ -1,6 +1,6 @@
 import {createContext, useEffect, useState} from 'react';
 
-import Header from "./header";
+import Header from "@/components/Header";
 import {Game, Level} from "@/components/Game/Game";
 import {LevelPicker} from "@/components/LevelPicker/LevelPicker";
 import {Settings} from "@/components/Settings/Settings";

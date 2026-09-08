@@ -1,10 +1,16 @@
 .page {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    height: 100vh;
+    /* Small viewport height: the guaranteed-visible size assuming the browser's own address
+       bar/toolbar is showing. dvh recalculates as the toolbar animates and can briefly report
+       the larger toolbar-hidden size on load, pushing the top of the page behind the toolbar. */
+    height: 100svh;
 }
 .header {
     width: 100%;
+    max-width: var(--measuredWidth, 768px);
+    margin: 0 auto;
     background-color: darkgray;
     padding: 4px 0 8px;
     box-sizing: border-box;
@@ -14,6 +20,56 @@
     align-items: stretch;
     max-width: 768px;
     margin: auto;
+}
+/* Wide-but-short viewports (phones/tablets rotated to landscape, or a short desktop window):
+   the icon panel becomes a left sidebar and the board takes the rest of the width, instead of
+   squeezing a short, wide board under a full-width header. Which markup renders (this sidebar
+   layout vs. the default stacked one above) is decided in JS via matchMedia against the same
+   condition, so the two never disagree - and each gets its own plain classes below rather than
+   overloading .navRow/.stats with reflow tricks (display:contents + order there used to fall
+   apart on some mobile browsers, leaving buttons stretched and mispositioned).             */
+.pageSidebar {
+    flex-direction: row;
+}
+.headerSidebar {
+    width: 280px;
+    max-width: none;
+    height: 100%;
+    margin: 0;
+    overflow-y: auto;
+    flex: 0 0 auto;
+}
+.sidebarTopRow {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 8px;
+}
+.sidebarTopRow .navButton {
+    flex: 0 0 32px;
+    height: 32px;
+}
+.sidebarTopRow .levelLabel {
+    flex: 1;
+    margin: 0;
+    text-align: center;
+}
+.sidebarStats {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin-top: 12px;
+    padding: 0 8px;
+}
+.statLine {
+    display: flex;
+    gap: 4px;
+    align-items: baseline;
+    white-space: nowrap;
+}
+.statLine .statLabel::after {
+    content: ":";
 }
 .navButton {
     flex: 0 0 60px;
@@ -76,6 +132,8 @@
 }
 .level {
     flex: 1;
+    min-height: 0;
+    container-type: size;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -84,9 +142,24 @@
     box-sizing: border-box;
     padding: 2rem;
 }
+/* Extra headroom above the board: in landscape some mobile browsers overlay their address
+   bar on top of the page instead of reserving space for it, so the board's regular 2rem
+   padding alone isn't a reliable enough buffer against it there. */
+.levelSidebar {
+    padding-top: 3.5rem;
+}
 .gameBoard {
     width: 100%;
     max-width: 768px;
+}
+/* On a wide-but-short viewport (desktop), width alone isn't enough - squares would grow
+   past the available height and push the page into a vertical scrollbar. Once container
+   query units are available, additionally cap width by the height budget converted through
+   the board's own row/column ratio (set as --rows/--cols inline style by Game.tsx). */
+@supports (width: 1cqh) {
+    .gameBoard {
+        width: min(768px, 100cqw, calc(100cqh * var(--cols) / var(--rows)));
+    }
 }
 .row {
     display: flex;

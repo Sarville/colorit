@@ -1,4 +1,4 @@
-import {useCallback, useContext, useEffect, useState} from "react";
+import {useCallback, useContext, useEffect, useRef, useState, type CSSProperties} from "react";
 import {Color, Modifier, Square, SquareProps} from "../Square/Square";
 import styles from "./Game.module.css";
 import {LevelContext, levels, levelOptimal, screens} from "@/pages";
@@ -218,6 +218,37 @@ export function Game() {
   const [gameIsWon, setGameIsWon] = useState(false);
   const {t} = useLanguage();
 
+  // The board's own width is CSS-driven (shrinks to fit the viewport height on short desktop
+  // windows), so the header mirrors its measured pixel width to stay the same width rather
+  // than always spanning full-bleed while the board sits narrower underneath it. Not used in
+  // the sidebar layout below, which has its own fixed width instead.
+  const gameBoardRef = useRef<HTMLDivElement>(null);
+  const [headerWidth, setHeaderWidth] = useState<number | null>(null);
+  useEffect(() => {
+    const el = gameBoardRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => setHeaderWidth(entry.contentRect.width));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Wide-but-short viewport (phone/tablet in landscape, or a short desktop window): the icon
+  // panel becomes a left sidebar instead of a full-width header above the board. Decided here
+  // rather than with a CSS media query alone because the sidebar needs a genuinely different
+  // arrangement of the same buttons (prev/next inline with the level label, icon row on its
+  // own line, one stat per line) - reordering that via CSS alone (display:contents + order)
+  // turned out to be unreliable on real mobile browsers.
+  const [isSidebar, setIsSidebar] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia(
+      "(orientation: landscape) and (pointer: coarse), (max-height: 600px) and (min-aspect-ratio: 1/1)"
+    );
+    setIsSidebar(mql.matches);
+    const onChange = () => setIsSidebar(mql.matches);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+
   useEffect(() => {
     if (gameIsWon) {
       playWon();
@@ -303,42 +334,86 @@ export function Game() {
   const best = levelProgress[pack][levelNumber].best;
   const optimal = levelOptimal[pack][levelNumber];
 
+  const previousButton = (
+    <button onClick={() => { playClick(); decrementLevelNumber(); }} className={`${styles.navButton} ${styles.previous}`}></button>
+  );
+  const nextButton = (
+    <button onClick={() => { playClick(); incrementLevelNumber(); }} className={`${styles.navButton} ${styles.next}`}></button>
+  );
+  const iconRow = (
+    <div className={styles.iconRow}>
+      <button onClick={() => { playClick(); goHome(); }} className={styles.home}></button>
+      <button onClick={() => { playClick(); handleReset(); }} className={styles.reset}></button>
+      <button onClick={() => { playClick(); openSettings(); }} className={styles.settings}></button>
+    </div>
+  );
+
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <div className={styles.navRow}>
-          <button onClick={() => { playClick(); decrementLevelNumber(); }} className={`${styles.navButton} ${styles.previous}`}></button>
-          <div className={styles.centerColumn}>
-            <p className={styles.levelLabel}>{t("level")} {levelNumber + 1}</p>
-            <div className={styles.iconRow}>
-              <button onClick={() => { playClick(); goHome(); }} className={styles.home}></button>
-              <button onClick={() => { playClick(); handleReset(); }} className={styles.reset}></button>
-              <button onClick={() => { playClick(); openSettings(); }} className={styles.settings}></button>
+    <div className={`${styles.page} ${isSidebar ? styles.pageSidebar : ""}`}>
+      <div
+        className={`${styles.header} ${isSidebar ? styles.headerSidebar : ""}`}
+        style={headerWidth && !isSidebar ? {"--measuredWidth": `${headerWidth}px`} as CSSProperties : undefined}
+      >
+        {isSidebar ? (
+          <>
+            <div className={styles.sidebarTopRow}>
+              {previousButton}
+              <p className={styles.levelLabel}>{t("level")} {levelNumber + 1}</p>
+              {nextButton}
             </div>
-          </div>
-          <button onClick={() => { playClick(); incrementLevelNumber(); }} className={`${styles.navButton} ${styles.next}`}></button>
-        </div>
-        <div className={styles.stats}>
-          <div className={styles.statColumn}>
-            <span className={styles.statLabel}>{t("moves")}</span>
-            <span className={styles.statValue}>{moves}</span>
-          </div>
-          <div className={styles.statsRight}>
-            <div className={styles.statColumn}>
-              <span className={styles.statLabel}>{t("best")}</span>
-              <span className={styles.statValue}>{best ?? "-"}</span>
+            {iconRow}
+            <div className={styles.sidebarStats}>
+              <div className={styles.statLine}>
+                <span className={styles.statLabel}>{t("moves")}</span>
+                <span className={styles.statValue}>{moves}</span>
+              </div>
+              <div className={styles.statLine}>
+                <span className={styles.statLabel}>{t("best")}</span>
+                <span className={styles.statValue}>{best ?? "-"}</span>
+              </div>
+              <div className={styles.statLine}>
+                <span className={styles.statLabel}>{t("optimal")}</span>
+                <span className={styles.statValue}>{optimal ?? "-"}</span>
+              </div>
             </div>
-            <div className={styles.statColumn}>
-              <span className={styles.statLabel}>{t("optimal")}</span>
-              <span className={styles.statValue}>{optimal ?? "-"}</span>
+          </>
+        ) : (
+          <>
+            <div className={styles.navRow}>
+              {previousButton}
+              <div className={styles.centerColumn}>
+                <p className={styles.levelLabel}>{t("level")} {levelNumber + 1}</p>
+                {iconRow}
+              </div>
+              {nextButton}
             </div>
-          </div>
-        </div>
+            <div className={styles.stats}>
+              <div className={styles.statColumn}>
+                <span className={styles.statLabel}>{t("moves")}</span>
+                <span className={styles.statValue}>{moves}</span>
+              </div>
+              <div className={styles.statsRight}>
+                <div className={styles.statColumn}>
+                  <span className={styles.statLabel}>{t("best")}</span>
+                  <span className={styles.statValue}>{best ?? "-"}</span>
+                </div>
+                <div className={styles.statColumn}>
+                  <span className={styles.statLabel}>{t("optimal")}</span>
+                  <span className={styles.statValue}>{optimal ?? "-"}</span>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
-      <div className={styles.level}>
+      <div className={`${styles.level} ${isSidebar ? styles.levelSidebar : ""}`}>
         {gameIsWon ? <MessageModal onClick={incrementLevelNumber} message={"complete"}/> : null}
         {levelProgress[pack][levelNumber].status === "locked" ? <MessageModal onClick={undefined} message={"locked"}/> : null}
-        <div className={styles.gameBoard}>
+        <div
+          ref={gameBoardRef}
+          className={styles.gameBoard}
+          style={{"--rows": game.length, "--cols": game[0]?.length ?? 1} as CSSProperties}
+        >
           {game.map((row, index) => (
             <div key={index} className={styles.row}>
               {row.map((square) => (
