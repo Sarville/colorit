@@ -50,7 +50,7 @@ export function Tutorial({onClose}: { onClose: () => void }) {
     <div className={styles.contentArea} onClick={next}>
       <h1 className={styles.title}>
         {t("howToPlay")}<br/>
-        <span className={styles.brand}>FLOW IT!</span>
+        <span className={styles.brand}>{t("brandName")}</span>
       </h1>
 
       {slide === 0 ? (

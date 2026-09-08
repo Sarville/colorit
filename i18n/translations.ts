@@ -22,7 +22,8 @@ export const packNames: Record<Language, Record<"Easy" | "Medium" | "Hard" | "Co
 
 export const translations = {
   ru: {
-    title: "Flowit",
+    title: "Заливка",
+    brandName: "ЗАЛИВКА",
     start: "Старт",
     selectPack: "Выберите набор",
     selectLevel: "Выберите уровень",
@@ -40,7 +41,7 @@ export const translations = {
     tutorial: "Обучение",
     language: "Язык",
     back: "Назад",
-    howToPlay: "Как играть в",
+    howToPlay: "Как играть",
     fillAllBoxes: "Закрасьте все клетки в цвет их рамки",
     specialBoxes: "Особые клетки:",
     fillsOneDirection: "Красит в одну сторону",
@@ -53,6 +54,7 @@ export const translations = {
   },
   en: {
     title: "Flowit",
+    brandName: "FLOW IT!",
     start: "Start",
     selectPack: "Select Pack",
     selectLevel: "Select Level",

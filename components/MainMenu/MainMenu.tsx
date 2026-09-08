@@ -14,7 +14,7 @@ export function MainMenu({onStart, onSettings, showSignIn, onSignIn}: MainMenuPr
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>FLOW IT!</h1>
+      <h1 className={styles.title}>{t("brandName")}</h1>
       <div className={styles.buttons}>
         <div className={styles.selector}>
           <button onClick={() => { playClick(); onStart(); }}>{t("start")}</button>
