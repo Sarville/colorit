@@ -3,5 +3,10 @@ import '@/lib/audioFocus';
 import type { AppProps } from 'next/app'
 
 export default function App({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />
+  return (
+    <>
+      <img src="./images/bg.svg" alt="" aria-hidden="true" className="col-bg" />
+      <Component {...pageProps} />
+    </>
+  );
 }

@@ -2,6 +2,9 @@ import {useState} from "react";
 import {useLanguage} from "@/i18n/LanguageContext";
 import {playClick} from "@/lib/sound";
 import {Color, Modifier, Square} from "@/components/Square/Square";
+import {Logo} from "@/components/Logo";
+import {Splashes, defaultSplashes} from "@/components/Splashes";
+import {FlagButton} from "@/components/FlagButton";
 import styles from "./Tutorial.module.css";
 
 type Cell = { color: Color, targetColor: Color, modifier: Modifier };
@@ -20,7 +23,7 @@ const columns: Array<{paintColor: Color, arrowAt: "top" | "bottom"}> = [
 
 function DemoBoard({filled}: { filled: boolean }) {
   return (
-    <div className={styles.board}>
+    <div className={`col-panel ${styles.board}`}>
       {columns.map(({paintColor, arrowAt}, index) => (
         <div key={index} className={styles.boardColumn}>
           {makeColumn(paintColor, arrowAt, filled).map((cell, row) => (
@@ -47,44 +50,45 @@ export function Tutorial({onClose}: { onClose: () => void }) {
   }
 
   return (
-    <div className={styles.contentArea} onClick={next}>
-      <h1 className={styles.title}>
-        {t("howToPlay")}<br/>
-        <span className={styles.brand}>{t("brandName")}</span>
-      </h1>
+    <div className={styles.page} onClick={next}>
+      <Splashes items={defaultSplashes}/>
+      <Logo className={styles.logo}/>
+      <div className={`col-panel ${styles.card}`}>
+        <h1 className="col-heading">{t("howToPlay")}</h1>
 
-      {slide === 0 ? (
-        <div className={styles.slide}>
-          <div className={styles.boardsRow}>
-            <DemoBoard filled={false}/>
-            <span className={styles.chevron}>&raquo;</span>
-            <DemoBoard filled={true}/>
+        {slide === 0 ? (
+          <div className={styles.slide}>
+            <div className={styles.boardsRow}>
+              <DemoBoard filled={false}/>
+              <span className={styles.chevron}>&raquo;</span>
+              <DemoBoard filled={true}/>
+            </div>
+            <p className={styles.caption}>{t("fillAllBoxes")}</p>
           </div>
-          <p className={styles.caption}>{t("fillAllBoxes")}</p>
-        </div>
-      ) : (
-        <div className={styles.slide}>
-          <p className={styles.caption}>{t("specialBoxes")}</p>
-          <div className={styles.specialRow}>
-            <div className={styles.icon}><Square color={Color.blue} targetColor={Color.none} modifier={Modifier.right}/></div>
-            <p>{t("fillsOneDirection")}</p>
+        ) : (
+          <div className={styles.slide}>
+            <p className={styles.caption}>{t("specialBoxes")}</p>
+            <div className={styles.specialRow}>
+              <div className={styles.icon}><Square color={Color.blue} targetColor={Color.none} modifier={Modifier.right}/></div>
+              <p>{t("fillsOneDirection")}</p>
+            </div>
+            <div className={styles.specialRow}>
+              <div className={styles.icon}><Square color={Color.blue} targetColor={Color.none} modifier={Modifier.rotateRight}/></div>
+              <p>{t("fillsRotating")}</p>
+            </div>
+            <div className={styles.specialRow}>
+              <div className={styles.icon}><Square color={Color.blue} targetColor={Color.none} modifier={Modifier.bomb}/></div>
+              <p>{t("fillsBomb")}</p>
+            </div>
+            <div className={styles.specialRow}>
+              <div className={styles.icon}><Square color={Color.blue} targetColor={Color.none} modifier={Modifier.circle}/></div>
+              <p>{t("fillsAllAround")}</p>
+            </div>
           </div>
-          <div className={styles.specialRow}>
-            <div className={styles.icon}><Square color={Color.blue} targetColor={Color.none} modifier={Modifier.rotateRight}/></div>
-            <p>{t("fillsRotating")}</p>
-          </div>
-          <div className={styles.specialRow}>
-            <div className={styles.icon}><Square color={Color.blue} targetColor={Color.none} modifier={Modifier.bomb}/></div>
-            <p>{t("fillsBomb")}</p>
-          </div>
-          <div className={styles.specialRow}>
-            <div className={styles.icon}><Square color={Color.blue} targetColor={Color.none} modifier={Modifier.circle}/></div>
-            <p>{t("fillsAllAround")}</p>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      <button className={styles.next} onClick={next}>{slide < lastSlide ? t("tapToContinue") : t("tutorialClose")}</button>
+      <FlagButton className={styles.next} onClick={next}>{slide < lastSlide ? t("tapToContinue") : t("tutorialClose")}</FlagButton>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import {useLanguage} from "@/i18n/LanguageContext";
 import {playClick} from "@/lib/sound";
+import {FlagButton} from "@/components/FlagButton";
 import styles from "./AuthPrompt.module.css";
 
 export function AuthPrompt({onSignIn, onDismiss}: { onSignIn: () => void, onDismiss: () => void }) {
@@ -7,10 +8,10 @@ export function AuthPrompt({onSignIn, onDismiss}: { onSignIn: () => void, onDism
 
   return (
     <div className={styles.modal}>
-      <div className={styles.dialog}>
+      <div className={`col-panel ${styles.dialog}`}>
         <p>{t("signInPrompt")}</p>
-        <button className={styles.signIn} onClick={() => { playClick(); onSignIn(); }}>{t("signIn")}</button>
-        <button className={styles.dismiss} onClick={() => { playClick(); onDismiss(); }}>{t("notNow")}</button>
+        <FlagButton onClick={() => { playClick(); onSignIn(); }}>{t("signIn")}</FlagButton>
+        <FlagButton ghost onClick={() => { playClick(); onDismiss(); }}>{t("notNow")}</FlagButton>
       </div>
     </div>
   );

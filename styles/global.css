@@ -1,8 +1,132 @@
 html,
 body {
     margin: 0;
-    background-color: #d8d8d8;
+    /* No background-color here: it would propagate to the canvas and paint behind the
+       page in a way that can occlude the position:fixed, z-index:-1 .col-bg image below,
+       depending on stacking-context quirks. #eaf4ff only matters before .col-bg loads. */
     font-family: 'russo-one', sans-serif;
+    /* This is a bold display font at small sizes on a busy pastel background - without this
+       some browsers (Windows Chrome/Firefox in particular) anti-alias it heavily enough to
+       read as blurry rather than crisp. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+.col-bg {
+    background-color: #eaf4ff;
+}
+
+/* --- Shared "glossy paint" UI primitives (Kolorit redesign) ------------------------------
+   One reusable set of classes instead of every screen re-declaring its own button/panel
+   look. Plain global classnames (not CSS-module scoped) so any component can opt in by
+   name; "col-" prefixed to stay out of the way of module-generated hashes. */
+
+.col-panel {
+    position: relative;
+    background: linear-gradient(180deg, #ffffff 0%, #eaf3ff 100%);
+    border: 1px solid #ffffff;
+    border-radius: 28px;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -2px 4px rgba(150, 180, 220, 0.22),
+        0 3px 4px rgba(60, 90, 140, 0.14),
+        0 6px 10px rgba(60, 90, 140, 0.12);
+}
+
+/* Glossy-plastic blue used by every button/circle: a highlight streak (radial gradient, top-
+   left) layered over a bright, fairly saturated sky-blue ramp - lighter than a "safe" navy so
+   it actually reads as vivid instead of muddy. */
+:root {
+    --col-blue-gloss:
+        radial-gradient(115% 85% at 30% 6%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 38%),
+        linear-gradient(180deg, #74d9ff 0%, #3badf7 32%, #1f92ec 68%, #157fd8 100%);
+    --col-blue-rim: #1560ad;
+}
+/* Word-fit and wide flag-shaped buttons (Старт/Настройки/Назад/Settings' rows/...) moved to
+   the FlagButton component (components/FlagButton.tsx) - a true-curve clip-path: path() shape
+   needs the button's own measured pixel size (path() has no var()/calc()/percentage support),
+   so it's generated in JS per element rather than living here as CSS. See FlagButton.module.css. */
+
+.col-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1px solid #ffffff;
+    background:
+        radial-gradient(120% 90% at 30% 10%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 45%),
+        linear-gradient(180deg, #ffffff 0%, #eef4fc 55%, #dbe7f7 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -3px 4px rgba(130, 165, 210, 0.4),
+        0 2px 4px rgba(40, 70, 120, 0.22);
+    color: #2b6cb0;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+}
+.col-circle:active {
+    transform: translateY(2px);
+}
+.col-circle svg {
+    width: 22px;
+    height: 22px;
+}
+.col-circle--accent {
+    background: var(--col-blue-gloss);
+    border-color: #bde6ff;
+    color: #fff;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        inset 0 -5px 7px rgba(4, 30, 65, 0.38),
+        0 3px 6px rgba(8, 30, 60, 0.35);
+}
+/* Icons on the accent circle are the same dark-gray bitmaps used elsewhere (see Game.module.css) -
+   forced to white so they read against the blue fill without needing separate recolored assets. */
+.col-circle--accent img {
+    filter: brightness(0) invert(1);
+}
+
+.col-heading {
+    display: inline-block;
+    padding: 8px 26px;
+    border: 2px solid #ffffff;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #bfe3ff 0%, #8fcbf7 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        inset 0 -3px 5px rgba(40, 100, 160, 0.28),
+        0 2px 5px rgba(20, 60, 110, 0.18);
+    color: #123a63;
+    font-weight: 700;
+    font-size: 1.3rem;
+    text-align: center;
+    margin: 0;
+}
+
+/* Full-bleed decorative background. A plain <img> (not a CSS background-image and not
+   next/image) because the static export ships under an arbitrary sub-path - see the
+   asset-path note in Header.tsx. A relative "./images/..." src on an <img> resolves against
+   the page URL and survives that, where a CSS url() or next/image srcset would not. */
+.col-bg {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Decorative paint-splash corner accents, reused across screens. */
+.col-splash {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
 }
 
 /* Embedded as data URIs (not url('../fonts/...')) because the static export is served from

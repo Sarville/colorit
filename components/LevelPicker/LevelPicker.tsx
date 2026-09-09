@@ -3,6 +3,9 @@ import {LevelContext, levelOptimal, levels, screens} from "@/pages";
 import {useLanguage} from "@/i18n/LanguageContext";
 import {packNames} from "@/i18n/translations";
 import {playClick} from "@/lib/sound";
+import {Logo} from "@/components/Logo";
+import {Splashes, defaultSplashes} from "@/components/Splashes";
+import {ChevronLeftIcon} from "@/components/icons";
 import styles from "./LevelPicker.module.css"
 
 export function LevelPicker() {
@@ -12,33 +15,42 @@ export function LevelPicker() {
   );
   const {language, t} = useLanguage();
   return (
-    <div className={styles.contentArea}>
-      <div className={styles.selector}>
-        <button onClick={() => { playClick(); changeCurrentScreen(screens.SelectPack); }}>{packNames[language][pack]}</button>
-      </div>
-      <h1>{t("selectLevel")}</h1>
-      <div className={styles.pickerArea}>
-        {levels[pack].map((_level, index) => {
-          const progress = levelProgress[pack][index];
-          const isOptimal = progress.best !== null && progress.best === levelOptimal[pack][index];
-          const isHighlighted = lastExitedLevel === index;
-          return (
-            <div
-              key={index}
-              onClick={() => {
-                playClick()
-                changeLevelNumber(index)
-                changeCurrentScreen(screens.Game)
-              }}
-              className={styles.clickableArea}
-            >
-              <div className={`${styles.levelStatus} ${styles[progress.status]} ${isHighlighted ? styles.highlighted : ""}`}>
-                {isOptimal ? <div className={styles.star}></div> : null}
-              </div>
-              <div className={styles.levelNumber}>{index + 1}</div>
-            </div>
-          );
-        })}
+    <div className={styles.page}>
+      <Splashes items={defaultSplashes}/>
+      <button
+        className={`col-circle ${styles.backButton}`}
+        onClick={() => { playClick(); changeCurrentScreen(screens.SelectPack); }}
+        aria-label={t("back")}
+      >
+        <ChevronLeftIcon/>
+      </button>
+      <Logo className={styles.logo}/>
+      <div className={styles.contentArea}>
+        <div className="col-heading">{packNames[language][pack]}</div>
+        <h1 className={styles.subtitle}>{t("selectLevel")}</h1>
+        <div className={styles.pickerArea}>
+          {levels[pack].map((_level, index) => {
+            const progress = levelProgress[pack][index];
+            const isOptimal = progress.best !== null && progress.best === levelOptimal[pack][index];
+            const isHighlighted = lastExitedLevel === index;
+            return (
+              <button
+                key={index}
+                onClick={() => {
+                  playClick()
+                  changeLevelNumber(index)
+                  changeCurrentScreen(screens.Game)
+                }}
+                className={`${styles.levelTile} ${isHighlighted ? styles.current : ""}`}
+              >
+                {isOptimal ? <div className={styles.star}/> : null}
+                {progress.status === "locked" ? <div className={styles.tileIcon}/> : null}
+                {progress.status === "complete" ? <div className={`${styles.tileIcon} ${styles.tileCheck}`}/> : null}
+                <span className={styles.tileNumber}>{index + 1}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

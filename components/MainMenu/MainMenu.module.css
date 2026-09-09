@@ -1,45 +1,27 @@
 .page {
+    position: relative;
     display: flex;
     flex-direction: column;
+    align-items: center;
     min-height: 100vh;
+    min-height: 100svh;
     box-sizing: border-box;
-    padding: 2rem;
-    max-width: 768px;
-    margin: auto;
+    padding: 2rem 1.5rem;
+    overflow: hidden;
 }
 
-.title {
-    color: cornflowerblue;
-    font-size: 3.5rem;
-    letter-spacing: 2px;
-    margin: 1rem 0 0;
+.logo {
+    width: min(88%, 420px);
+    margin-top: 3vh;
 }
 
 .buttons {
     flex: 1;
+    width: 100%;
     display: flex;
     flex-direction: column;
+    align-items: center;
     justify-content: center;
-    gap: 24px;
-}
-
-.buttons button {
-    background-color: cornflowerblue;
-    color: #FFFFFF;
-    width: 80%;
-    max-width: 400px;
-    font-size: 20px;
-    height: 50px;
-    border: none;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.selector:after {
-    content:'';
-    position: absolute;
-    border-top: 25px solid transparent;
-    border-bottom: 25px solid transparent;
-    border-left: 25px solid cornflowerblue;
-    border-right: 25px solid transparent;
+    gap: 20px;
+    padding-bottom: 4vh;
 }

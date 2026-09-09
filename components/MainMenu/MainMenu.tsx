@@ -1,5 +1,8 @@
 import {useLanguage} from "@/i18n/LanguageContext";
 import {playClick} from "@/lib/sound";
+import {Logo} from "@/components/Logo";
+import {Splashes, defaultSplashes} from "@/components/Splashes";
+import {FlagButton} from "@/components/FlagButton";
 import styles from "./MainMenu.module.css";
 
 type MainMenuProps = {
@@ -14,18 +17,13 @@ export function MainMenu({onStart, onSettings, showSignIn, onSignIn}: MainMenuPr
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>{t("brandName")}</h1>
+      <Splashes items={defaultSplashes}/>
+      <Logo className={styles.logo}/>
       <div className={styles.buttons}>
-        <div className={styles.selector}>
-          <button onClick={() => { playClick(); onStart(); }}>{t("start")}</button>
-        </div>
-        <div className={styles.selector}>
-          <button onClick={() => { playClick(); onSettings(); }}>{t("settings")}</button>
-        </div>
+        <FlagButton onClick={() => { playClick(); onStart(); }}>{t("start")}</FlagButton>
+        <FlagButton onClick={() => { playClick(); onSettings(); }}>{t("settings")}</FlagButton>
         {showSignIn ? (
-          <div className={styles.selector}>
-            <button onClick={() => { playClick(); onSignIn(); }}>{t("yandexId")}</button>
-          </div>
+          <FlagButton onClick={() => { playClick(); onSignIn(); }}>{t("yandexId")}</FlagButton>
         ) : null}
       </div>
     </div>

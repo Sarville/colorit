@@ -1,6 +1,7 @@
 import {useState} from "react";
 import {useLanguage} from "@/i18n/LanguageContext";
 import {playClick} from "@/lib/sound";
+import {FlagButton} from "@/components/FlagButton";
 import styles from "./SupportAuthorModal.module.css";
 
 export function SupportAuthorModal({adsDisabled, onSupport, onClose}: {
@@ -23,13 +24,13 @@ export function SupportAuthorModal({adsDisabled, onSupport, onClose}: {
 
   return (
     <div className={styles.modal}>
-      <div className={styles.dialog}>
+      <div className={`col-panel ${styles.dialog}`}>
         <p>{adsDisabled ? t("supportAfterText") : t("supportBeforeText")}</p>
         {failed ? <p className={styles.error}>{t("supportFailedText")}</p> : null}
-        <button className={styles.support} disabled={purchasing} onClick={handleSupport}>
+        <FlagButton disabled={purchasing} onClick={handleSupport}>
           {adsDisabled ? t("supportAgainButton") : t("supportButton")}
-        </button>
-        <button className={styles.dismiss} onClick={() => { playClick(); onClose(); }}>{t("close")}</button>
+        </FlagButton>
+        <FlagButton ghost onClick={() => { playClick(); onClose(); }}>{t("close")}</FlagButton>
       </div>
     </div>
   );

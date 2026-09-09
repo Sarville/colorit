@@ -1,0 +1,114 @@
+.btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    filter:
+        drop-shadow(0 4px 3px rgba(17, 76, 130, 0.42))
+        drop-shadow(0 0 6px rgba(255, 255, 225, 0.5));
+    transition: transform 0.08s ease, filter 0.08s ease;
+}
+.btn:active {
+    transform: translateY(2px) scale(0.99);
+    filter:
+        drop-shadow(0 2px 2px rgba(17, 76, 130, 0.35))
+        drop-shadow(0 0 4px rgba(255, 255, 225, 0.45));
+}
+.btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.wide {
+    width: 100%;
+    max-width: 420px;
+    height: 56px;
+}
+.tag {
+    width: fit-content;
+    min-width: 50%;
+    height: 48px;
+}
+
+.outer,
+.rim,
+.fill,
+.shine {
+    position: absolute;
+    /* .label below is a normal (non-absolute) flex item on purpose - see its comment - which
+       means it paints in an EARLIER stacking step than these position:absolute layers by
+       default, so the layers would otherwise cover the text entirely. Matches the fix in
+       global.css's button primitives: drop these behind both the button's own background and
+       its in-flow content. */
+    z-index: -1;
+}
+.outer {
+    background: linear-gradient(to bottom, #0576d6 0%, #036ed4 48%, #005dc3 100%);
+}
+.rim {
+    background: linear-gradient(to bottom, #e8ffff 0%, #7fe8ff 20%, #2fc4ff 55%, #9defff 82%, #e8ffff 100%);
+}
+.fill {
+    background:
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.12) 15%, rgba(255, 255, 255, 0) 33%),
+        linear-gradient(to bottom, #39b6ff 0%, #109af7 38%, #067de8 64%, #0068d3 100%);
+}
+.shine {
+    border-top: 1px solid rgba(255, 255, 255, 0.55);
+    pointer-events: none;
+}
+
+/* Secondary/dismiss action (e.g. "Не сейчас") - lighter fill so it doesn't compete with a
+   primary .wide button next to it. */
+.ghost .outer {
+    background: linear-gradient(to bottom, #bcd6ea 0%, #a9c9e2 100%);
+}
+.ghost .rim {
+    background: #ffffff;
+}
+.ghost .fill {
+    background:
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 33%),
+        linear-gradient(to bottom, #eef6fc 0%, #dcebf7 100%);
+}
+.ghost .shine {
+    border-top-color: rgba(255, 255, 255, 0.8);
+}
+.ghost .label {
+    color: #1c3f66;
+    text-shadow: none;
+}
+
+/* Deliberately NOT position:absolute: this is the one real (non-absolutely-positioned) child
+   of .btn, so it's what .btn's width:fit-content (the "tag" variant) actually sizes around -
+   an absolutely-positioned label doesn't participate in flex/fit-content sizing at all, which
+   is exactly the bug this fixes (long labels like "ПОДДЕРЖАТЬ АВТОРА" used to overflow a
+   button that had sized itself around nothing). */
+.label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 30px;
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.05rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1;
+    text-shadow:
+        0 2px 0 rgba(4, 78, 160, 0.7),
+        0 3px 3px rgba(0, 50, 115, 0.38),
+        0 0 2px rgba(255, 255, 255, 0.5);
+    user-select: none;
+    white-space: nowrap;
+}
+.tag .label {
+    font-size: 0.95rem;
+    padding: 0 20px;
+}

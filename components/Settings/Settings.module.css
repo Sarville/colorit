@@ -1,53 +1,80 @@
+.page {
+    position: relative;
+    min-height: 100vh;
+    min-height: 100svh;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+.logo {
+    display: block;
+    width: min(70%, 320px);
+    margin: 1.5rem auto 0;
+}
+
 .contentArea {
-    margin: auto;
-    max-width: 768px;
-    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 1.5rem 1.5rem 3rem;
+}
+
+.panelWrap {
+    position: relative;
+    width: 100%;
+}
+
+.panelTitle {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: fit-content;
+    margin: 0 auto -18px;
+}
+
+.panel {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 32px 20px 24px;
+    display: flex;
+    flex-direction: column;
 }
 
 .row {
     display: flex;
     align-items: center;
-    gap: 20px;
-    margin-top: 20px;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 18px;
 }
-
-.row .selector {
-    flex: 1;
-    min-width: 0;
-}
-
-.row button {
-    background-color: cornflowerblue;
-    color: #FFFFFF;
-    width: 80%;
-    max-width: 400px;
-    font-size: 20px;
-    height: 50px;
-    border: none;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.selector:after {
-    content:'';
-    position: absolute;
-    border-top: 25px solid transparent;
-    border-bottom: 25px solid transparent;
-    border-left: 25px solid cornflowerblue;
-    border-right: 25px solid transparent;
+.row:first-child {
+    margin-top: 0;
 }
 
 .icon {
-    font-size: 28px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-weight: 700;
+    color: #1c3f66;
     cursor: pointer;
     user-select: none;
+    flex-shrink: 0;
 }
 
 .iconSvg {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     display: block;
-    color: #333333;
+    color: #2f8ce0;
+}
+
+.langChevron {
+    width: 18px;
+    height: 18px;
+    color: #2f8ce0;
 }
 
 .colorPreview {
@@ -55,6 +82,7 @@
     flex-direction: column;
     gap: 4px;
     cursor: pointer;
+    flex-shrink: 0;
 }
 
 .colorPreviewRow {
@@ -63,69 +91,53 @@
 }
 
 .swatch {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     display: inline-block;
+    border-radius: 6px;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        inset 0 -2px 3px rgba(0, 0, 0, 0.25);
 }
 
 .sliderRow {
     margin-top: 10px;
-    padding: 0 4px;
+    padding: 0 6px;
 }
 
 .slider {
     width: 100%;
     -webkit-appearance: none;
     appearance: none;
-    height: 6px;
-    border-radius: 3px;
-    background: #b8c9ee;
+    height: 8px;
+    border-radius: 4px;
     outline: none;
     margin: 0;
+    box-shadow: inset 0 1px 3px rgba(30, 60, 100, 0.25);
 }
 
 .slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    background: cornflowerblue;
+    background: radial-gradient(circle at 35% 30%, #ffffff 0%, #dceaff 60%, #b9d4f5 100%);
+    box-shadow: 0 2px 4px rgba(20, 60, 110, 0.4), 0 0 0 3px rgba(47, 140, 224, 0.25);
     cursor: pointer;
     border: none;
 }
 
 .slider::-moz-range-thumb {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    background: cornflowerblue;
+    background: radial-gradient(circle at 35% 30%, #ffffff 0%, #dceaff 60%, #b9d4f5 100%);
+    box-shadow: 0 2px 4px rgba(20, 60, 110, 0.4), 0 0 0 3px rgba(47, 140, 224, 0.25);
     cursor: pointer;
     border: none;
 }
 
-.backRow {
-    margin-top: 40px;
-}
-
-.backSelector:before {
-    content:'';
-    position: absolute;
-    border-top: 25px solid transparent;
-    border-bottom: 25px solid transparent;
-    border-right: 25px solid cornflowerblue;
-    border-left: 25px solid transparent;
-}
-
-.backSelector button {
-    background-color: cornflowerblue;
-    color: #FFFFFF;
-    width: 80%;
-    max-width: 400px;
-    margin-left: 49px;
-    font-size: 20px;
-    height: 50px;
-    border: none;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+.backBtn {
+    margin-top: 28px;
 }

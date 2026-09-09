@@ -19,17 +19,17 @@ export function MessageModal(props: MessageModalProps) {
     </div>
   } else if (props.message === "complete") {
     text = <div>
-      <p>{t("levelComplete")}</p>
-      <p>{t("tapToContinue")}</p>
+      <p className={styles.headline}>{t("levelComplete")}</p>
+      <p className={styles.subline}>{t("tapToContinue")}</p>
     </div>
   }
   return (
-    <div className={styles.modal}>
-      <div className={styles.modalBanner} onClick={props.onClick}>
-        <div className={styles.modalContent}>
+    <div className={styles.modal} onClick={props.onClick}>
+      <div className={`col-panel ${styles.card}`}>
+        <div className={`${styles.badge} col-circle col-circle--accent`}>
           <div className={styles[props.message]}></div>
-          {text}
         </div>
+        {text}
       </div>
     </div>
   );

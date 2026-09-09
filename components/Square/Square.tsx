@@ -65,7 +65,7 @@ export function Square(props: SquareProps) {
   const border = isBlank ? "transparent" : (props.targetColor === Color.none ? background : getColorHex(props.targetColor, scheme));
   return (
     <button
-      className={styles.square}
+      className={`${styles.square} ${isBlank ? styles.blank : ""}`}
       style={{ backgroundColor: background, borderColor: border }}
       onClick={props.onClick}
     >

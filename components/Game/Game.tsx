@@ -7,6 +7,8 @@ import {levelStatus} from "@/levels/levelsUtils";
 import {useLanguage} from "@/i18n/LanguageContext";
 import {maybeShowLevelCompleteAd} from "@/lib/ads";
 import {playClick, playWon} from "@/lib/sound";
+import {GearIcon, HomeIcon, ResetIcon, TriangleLeftIcon, TriangleRightIcon} from "@/components/icons";
+import {Splashes} from "@/components/Splashes";
 
 export type Level = Array<Array<SquareProps>>;
 
@@ -216,7 +218,7 @@ export function Game() {
   const [moves, setMoves] = useState(0);
   const [game, setGame] = useState(loadLevel(levels[pack][levelNumber]));
   const [gameIsWon, setGameIsWon] = useState(false);
-  const {t} = useLanguage();
+  const {t, language} = useLanguage();
 
   // The board's own width is CSS-driven (shrinks to fit the viewport height on short desktop
   // windows), so the header mirrors its measured pixel width to stay the same width rather
@@ -333,32 +335,57 @@ export function Game() {
 
   const best = levelProgress[pack][levelNumber].best;
   const optimal = levelOptimal[pack][levelNumber];
+  // One of the 3 pre-cropped slogan stickers (see public/images/slogan_<lang>_<1-3>.webp),
+  // cycled by level so it doesn't repeat on every screen.
+  const sloganIndex = (levelNumber % 3) + 1;
 
   const previousButton = (
-    <button onClick={() => { playClick(); decrementLevelNumber(); }} className={`${styles.navButton} ${styles.previous}`}></button>
+    <button onClick={() => { playClick(); decrementLevelNumber(); }} className={`col-circle ${styles.navCircle}`} aria-label="prev">
+      <TriangleLeftIcon/>
+    </button>
   );
   const nextButton = (
-    <button onClick={() => { playClick(); incrementLevelNumber(); }} className={`${styles.navButton} ${styles.next}`}></button>
+    <button onClick={() => { playClick(); incrementLevelNumber(); }} className={`col-circle ${styles.navCircle}`} aria-label="next">
+      <TriangleRightIcon/>
+    </button>
   );
   const iconRow = (
     <div className={styles.iconRow}>
-      <button onClick={() => { playClick(); goHome(); }} className={styles.home}></button>
-      <button onClick={() => { playClick(); handleReset(); }} className={styles.reset}></button>
-      <button onClick={() => { playClick(); openSettings(); }} className={styles.settings}></button>
+      <button onClick={() => { playClick(); goHome(); }} className={`col-circle ${styles.iconCircle}`} aria-label="home">
+        <HomeIcon/>
+      </button>
+      <button onClick={() => { playClick(); handleReset(); }} className={`col-circle col-circle--accent ${styles.iconCircle}`} aria-label="reset">
+        <ResetIcon/>
+      </button>
+      <button onClick={() => { playClick(); openSettings(); }} className={`col-circle ${styles.iconCircle}`} aria-label="settings">
+        <GearIcon/>
+      </button>
     </div>
   );
 
   return (
     <div className={`${styles.page} ${isSidebar ? styles.pageSidebar : ""}`}>
+      <Splashes items={[
+        {src: "splash6", style: {top: "1%", left: "-12%", width: "22vw", maxWidth: 100, transform: "rotate(-10deg)"}},
+        {src: "splash3", style: {bottom: "1%", right: "-12%", width: "22vw", maxWidth: 100, transform: "rotate(12deg)"}},
+      ]}/>
+      {isSidebar ? null : (
+        <img
+          src={`./images/slogan_${language}_${sloganIndex}.webp`}
+          alt=""
+          aria-hidden="true"
+          className={`col-splash ${styles.slogan}`}
+        />
+      )}
       <div
-        className={`${styles.header} ${isSidebar ? styles.headerSidebar : ""}`}
+        className={`col-panel ${styles.header} ${isSidebar ? styles.headerSidebar : ""}`}
         style={headerWidth && !isSidebar ? {"--measuredWidth": `${headerWidth}px`} as CSSProperties : undefined}
       >
         {isSidebar ? (
           <>
             <div className={styles.sidebarTopRow}>
               {previousButton}
-              <p className={styles.levelLabel}>{t("level")} {levelNumber + 1}</p>
+              <p className={`col-heading ${styles.levelLabel}`}>{t("level")} {levelNumber + 1}</p>
               {nextButton}
             </div>
             {iconRow}
@@ -382,7 +409,7 @@ export function Game() {
             <div className={styles.navRow}>
               {previousButton}
               <div className={styles.centerColumn}>
-                <p className={styles.levelLabel}>{t("level")} {levelNumber + 1}</p>
+                <p className={`col-heading ${styles.levelLabel}`}>{t("level")} {levelNumber + 1}</p>
                 {iconRow}
               </div>
               {nextButton}
@@ -411,7 +438,7 @@ export function Game() {
         {levelProgress[pack][levelNumber].status === "locked" ? <MessageModal onClick={undefined} message={"locked"}/> : null}
         <div
           ref={gameBoardRef}
-          className={styles.gameBoard}
+          className={`col-panel ${styles.gameBoard}`}
           style={{"--rows": game.length, "--cols": game[0]?.length ?? 1} as CSSProperties}
         >
           {game.map((row, index) => (

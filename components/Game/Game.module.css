@@ -1,4 +1,5 @@
 .page {
+    position: relative;
     display: flex;
     flex-direction: column;
     height: 100vh;
@@ -6,20 +7,39 @@
        bar/toolbar is showing. dvh recalculates as the toolbar animates and can briefly report
        the larger toolbar-hidden size on load, pushing the top of the page behind the toolbar. */
     height: 100svh;
+    overflow: hidden;
 }
 .header {
-    width: 100%;
+    width: calc(100% - 24px);
     max-width: var(--measuredWidth, 768px);
-    margin: 0 auto;
-    background-color: darkgray;
-    padding: 4px 0 8px;
+    margin: 12px auto 0;
+    padding: 16px 18px 18px;
     box-sizing: border-box;
+    flex-shrink: 0;
 }
 .navRow {
     display: flex;
-    align-items: stretch;
+    align-items: center;
     max-width: 768px;
     margin: auto;
+}
+/* Bigger than the default .col-circle (48px) - this is the header's main navigation, it
+   should read clearly rather than blend in with the smaller in-row icon buttons. */
+.navCircle {
+    width: 52px;
+    height: 52px;
+}
+.navCircle svg {
+    width: 22px;
+    height: 22px;
+}
+.iconCircle {
+    width: 52px;
+    height: 52px;
+}
+.iconCircle svg {
+    width: 26px;
+    height: 26px;
 }
 /* Wide-but-short viewports (phones/tablets rotated to landscape, or a short desktop window):
    the icon panel becomes a left sidebar and the board takes the rest of the width, instead of
@@ -32,27 +52,39 @@
     flex-direction: row;
 }
 .headerSidebar {
-    width: 280px;
+    width: 260px;
     max-width: none;
-    height: 100%;
-    margin: 0;
+    height: calc(100% - 24px);
+    margin: 12px 0 12px 12px;
     overflow-y: auto;
     flex: 0 0 auto;
+    padding: 16px 10px;
 }
 .sidebarTopRow {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 0 8px;
+    padding: 0 4px;
 }
-.sidebarTopRow .navButton {
-    flex: 0 0 32px;
-    height: 32px;
+.sidebarTopRow :global(.col-circle) {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+}
+.sidebarTopRow :global(.col-circle) svg {
+    width: 16px;
+    height: 16px;
 }
 .sidebarTopRow .levelLabel {
     flex: 1;
+    min-width: 0;
     margin: 0;
     text-align: center;
+    font-size: 0.95rem;
+    padding: 6px 10px;
+}
+.headerSidebar .iconRow {
+    margin-top: 10px;
 }
 .sidebarStats {
     display: flex;
@@ -61,6 +93,8 @@
     gap: 4px;
     margin-top: 12px;
     padding: 0 8px;
+    color: #1c3f66;
+    font-weight: 700;
 }
 .statLine {
     display: flex;
@@ -71,14 +105,6 @@
 .statLine .statLabel::after {
     content: ":";
 }
-.navButton {
-    flex: 0 0 60px;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: auto 80%;
-    background-color: transparent;
-    border: none;
-}
 .centerColumn {
     flex: 1;
     display: flex;
@@ -86,25 +112,19 @@
     align-items: center;
     justify-content: center;
     padding: 6px 0;
+    min-width: 0;
 }
 .levelLabel {
-    font-weight: bold;
-    margin: 0 0 8px;
+    margin: 0 0 14px;
+    padding: 10px 30px;
+    font-size: 1.3rem;
+    white-space: nowrap;
 }
 .iconRow {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 28px;
-}
-.iconRow button {
-    aspect-ratio: 1;
-    height: 40px;
-    background-repeat: no-repeat;
-    background-size: contain;
-    border: none;
-    margin: 2px;
-    background-color: transparent;
+    gap: 26px;
 }
 .stats {
     display: flex;
@@ -113,9 +133,11 @@
     align-items: flex-start;
     row-gap: 8px;
     max-width: 768px;
-    margin: 8px auto 0;
-    padding: 0 1rem;
+    margin: 16px auto 0;
+    padding: 0 0.5rem;
     box-sizing: border-box;
+    color: #1c3f66;
+    font-weight: 700;
 }
 .statColumn {
     display: flex;
@@ -123,8 +145,13 @@
     align-items: flex-end;
     white-space: nowrap;
 }
+.statLabel {
+    color: #5b7fa6;
+    font-size: 0.95rem;
+}
 .statValue {
     font-variant-numeric: tabular-nums;
+    font-size: 1.35rem;
 }
 .statsRight {
     display: flex;
@@ -137,10 +164,11 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     box-sizing: border-box;
-    padding: 2rem;
+    padding: 1rem 1.5rem 1.5rem;
+    overflow-y: auto;
 }
 /* Extra headroom above the board: in landscape some mobile browsers overlay their address
    bar on top of the page instead of reserving space for it, so the board's regular 2rem
@@ -151,6 +179,8 @@
 .gameBoard {
     width: 100%;
     max-width: 768px;
+    box-sizing: border-box;
+    padding: 14px;
 }
 /* On a wide-but-short viewport (desktop), width alone isn't enough - squares would grow
    past the available height and push the page into a vertical scrollbar. Once container
@@ -165,20 +195,14 @@
     display: flex;
     width: 100%;
 }
-.previous {
-    background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCA0OCI+CiAgPHBvbHlnb24gcG9pbnRzPSIyMiwwIDIsMjQgMjIsNDgiIGZpbGw9IiMzMzMzMzMiLz4KPC9zdmc+Cg==);
-}
-.next {
-    background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCA0OCI+CiAgPHBvbHlnb24gcG9pbnRzPSIyMiwwIDIsMjQgMjIsNDgiIGZpbGw9IiMzMzMzMzMiLz4KPC9zdmc+Cg==);
-    transform: rotate(180deg);
-    -webkit-transform: rotate(180deg);
-}
-.home {
-    background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiI+CiAgPGRlZnM+CiAgICA8bWFzayBpZD0iY3V0LWRvb3IiPgogICAgICA8cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgZmlsbD0id2hpdGUiLz4KICAgICAgPHJlY3QgeD0iMTA1IiB5PSIxNTEiIHdpZHRoPSI0NiIgaGVpZ2h0PSI2OCIgcng9IjUiIGZpbGw9ImJsYWNrIi8+CiAgICA8L21hc2s+CiAgPC9kZWZzPgogIDxnIGZpbGw9IiMzMzMzMzMiIG1hc2s9InVybCgjY3V0LWRvb3IpIj4KICAgIDxwYXRoIGQ9Ik0zOSAxMTQgTDExNiA0MiBRMTI4IDMxIDE0MCA0MiBMMjE3IDExNCBRMjI1IDEyMSAyMjEgMTMxIFEyMTggMTM5IDIwNyAxMzkgSDE5NCBWMjEzIFExOTQgMjI2IDE4MSAyMjYgSDc1IFE2MiAyMjYgNjIgMjEzIFYxMzkgSDQ5IFEzOCAxMzkgMzUgMTMxIFEzMSAxMjEgMzkgMTE0IFoiLz4KICA8L2c+Cjwvc3ZnPgo=);
-}
-.reset {
-    background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiI+CiAgPHBhdGggZD0iTTE4NyA3NkE4MiA4MiAwIDEgMCAyMDEgMTY1IiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzMzMzMiIHN0cm9rZS13aWR0aD0iMjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0xNzcgNDggTDIxNCA1NyBRMjIyIDU5IDIyMCA2NyBMMjEzIDEwNSBRMjExIDExNSAyMDIgMTA5IEwxNzAgODQgUTE2MCA3NiAxNzAgNjkgWiIgZmlsbD0iIzMzMzMzMyIvPgo8L3N2Zz4K);
-}
-.settings {
-    background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiI+CiAgPGRlZnM+CiAgICA8bWFzayBpZD0iZ2Vhci1ob2xlIj4KICAgICAgPHJlY3Qgd2lkdGg9IjI1NiIgaGVpZ2h0PSIyNTYiIGZpbGw9IndoaXRlIi8+CiAgICAgIDxjaXJjbGUgY3g9IjEyOCIgY3k9IjEyOCIgcj0iMzUiIGZpbGw9ImJsYWNrIi8+CiAgICA8L21hc2s+CiAgPC9kZWZzPgogIDxnIGZpbGw9IiMzMzMzMzMiIG1hc2s9InVybCgjZ2Vhci1ob2xlKSI+CiAgICA8Y2lyY2xlIGN4PSIxMjgiIGN5PSIxMjgiIHI9IjcyIi8+CiAgICA8cmVjdCB4PSIxMTIiIHk9IjI4IiB3aWR0aD0iMzIiIGhlaWdodD0iNTgiIHJ4PSI5Ii8+CiAgICA8cmVjdCB4PSIxMTIiIHk9IjE3MCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjU4IiByeD0iOSIvPgogICAgPHJlY3QgeD0iMjgiIHk9IjExMiIgd2lkdGg9IjU4IiBoZWlnaHQ9IjMyIiByeD0iOSIvPgogICAgPHJlY3QgeD0iMTcwIiB5PSIxMTIiIHdpZHRoPSI1OCIgaGVpZ2h0PSIzMiIgcng9IjkiLz4KICAgIDxyZWN0IHg9IjExMiIgeT0iMjgiIHdpZHRoPSIzMiIgaGVpZ2h0PSI1OCIgcng9IjkiIHRyYW5zZm9ybT0icm90YXRlKDQ1IDEyOCAxMjgpIi8+CiAgICA8cmVjdCB4PSIxMTIiIHk9IjE3MCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjU4IiByeD0iOSIgdHJhbnNmb3JtPSJyb3RhdGUoNDUgMTI4IDEyOCkiLz4KICAgIDxyZWN0IHg9IjI4IiB5PSIxMTIiIHdpZHRoPSI1OCIgaGVpZ2h0PSIzMiIgcng9IjkiIHRyYW5zZm9ybT0icm90YXRlKDQ1IDEyOCAxMjgpIi8+CiAgICA8cmVjdCB4PSIxNzAiIHk9IjExMiIgd2lkdGg9IjU4IiBoZWlnaHQ9IjMyIiByeD0iOSIgdHJhbnNmb3JtPSJyb3RhdGUoNDUgMTI4IDEyOCkiLz4KICA8L2c+Cjwvc3ZnPgo=);
+/* Decorative "fill every cell with paint!"-style sticker in the empty margin beside the
+   board - see public/images/slogan_<lang>_<n>.webp. Sits outside the board panel's own
+   width so it never overlaps the interactive grid; on narrow phones that margin is ~0, so
+   it mostly just goes off the edge of the viewport, which is fine for a decoration. */
+.slogan {
+    width: 30vw;
+    max-width: 150px;
+    bottom: 4%;
+    left: 2%;
+    transform: rotate(-6deg);
 }

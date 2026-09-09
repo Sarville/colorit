@@ -1,46 +1,43 @@
+.page {
+    position: relative;
+    min-height: 100vh;
+    min-height: 100svh;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+.backButton {
+    position: absolute;
+    top: 1.25rem;
+    left: 1.25rem;
+    z-index: 1;
+}
+
+.logo {
+    display: block;
+    width: min(70%, 320px);
+    margin: 1.5rem auto 0;
+}
+
 .contentArea {
-    margin: auto;
-    max-width: 768px;
-    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 1rem 2rem 3rem;
 }
 
-.contentArea button {
-    background-color: cornflowerblue;
-    color: #FFFFFF;
-    width: 80%;
-    max-width: 400px;
-    margin-top: 20px;
-    font-size: 20px;
-    height: 50px;
-    border: none;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+.subtitle {
+    color: #1c3f66;
+    font-size: 1.4rem;
+    margin: 10px 0 24px;
 }
 
-.selector:after {
-    content:'';
-    margin-top: 20px;
-    position: absolute;
-    border-top: 25px solid transparent;
-    border-bottom: 25px solid transparent;
-    border-left: 25px solid cornflowerblue;
-    border-right: 25px solid transparent;
-}
-
-.backRow {
-    margin-top: 40px;
-}
-
-.backSelector:before {
-    content:'';
-    position: absolute;
-    border-top: 25px solid transparent;
-    border-bottom: 25px solid transparent;
-    border-right: 25px solid cornflowerblue;
-    border-left: 25px solid transparent;
-}
-
-.backSelector button {
-    margin-top: 0;
-    margin-left: 49px;
+.buttons {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
 }
