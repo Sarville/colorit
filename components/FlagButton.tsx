@@ -6,6 +6,7 @@ type FlagButtonProps = {
   pointLeft?: boolean;
   variant?: "wide" | "tag";
   ghost?: boolean;
+  dense?: boolean;
   children: ReactNode;
 } & Pick<ButtonHTMLAttributes<HTMLButtonElement>, "onClick" | "disabled" | "className" | "aria-label">;
 
@@ -14,7 +15,7 @@ type FlagButtonProps = {
 // lib/flagPath.ts for why this needs the button's own measured pixel size rather than a CSS-only
 // shape. `pointLeft` mirrors it for the "back" button; the point itself IS the back cue, no
 // separate chevron icon needed.
-export function FlagButton({pointLeft, variant = "wide", ghost, children, className, ...rest}: FlagButtonProps) {
+export function FlagButton({pointLeft, variant = "wide", ghost, dense, children, className, ...rest}: FlagButtonProps) {
   const ref = useRef<HTMLButtonElement>(null);
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
 
@@ -42,7 +43,7 @@ export function FlagButton({pointLeft, variant = "wide", ghost, children, classN
   return (
     <button
       ref={ref}
-      className={`${styles.btn} ${variant === "tag" ? styles.tag : styles.wide} ${ghost ? styles.ghost : ""} ${className ?? ""}`}
+      className={`${styles.btn} ${variant === "tag" ? styles.tag : styles.wide} ${ghost ? styles.ghost : ""} ${dense ? styles.dense : ""} ${className ?? ""}`}
       {...rest}
     >
       {size ? (

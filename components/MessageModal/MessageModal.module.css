@@ -1,7 +1,7 @@
 .modal {
-  /* Absolutely positioned within Game's .level (position:relative), which covers only the
-  board area below the header - so the header's controls stay reachable while this blocks it. */
-  position: absolute;
+  /* Fixed to the viewport (not Game's .level) so the dim-out and the card both cover the
+     whole screen, header included, instead of just the board area below it. */
+  position: fixed;
   inset: 0;
   z-index: 999;
   background-color: rgba(20, 45, 80, 0.35);

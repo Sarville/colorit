@@ -7,7 +7,6 @@ import {getSoundVolume, isSoundEnabled, playClick, setSoundEnabled, setSoundVolu
 import {getMusicVolume, isMusicEnabled, setMusicEnabled, setMusicVolume} from "@/lib/music";
 import {MusicOffIcon, MusicOnIcon, SoundOffIcon, SoundOnIcon} from "@/components/Settings/icons";
 import {ChevronRightIcon} from "@/components/icons";
-import {Logo} from "@/components/Logo";
 import {Splashes, defaultSplashes} from "@/components/Splashes";
 import {FlagButton} from "@/components/FlagButton";
 import styles from "./Settings.module.css";
@@ -17,10 +16,11 @@ const previewLayout: Array<Array<Color>> = [
   [Color.green, Color.blue, Color.indigo],
 ];
 
-export function Settings({onOpenTutorial, onClose, onSupportAuthor}: {
+export function Settings({onOpenTutorial, onClose, onSupportAuthor, adsDisabled}: {
   onOpenTutorial: () => void,
   onClose: () => void,
   onSupportAuthor: () => void,
+  adsDisabled: boolean,
 }) {
   const {language, setLanguage, t} = useLanguage();
   const {scheme, cycleScheme} = useColorScheme();
@@ -84,10 +84,12 @@ export function Settings({onOpenTutorial, onClose, onSupportAuthor}: {
   return (
     <div className={styles.page}>
       <Splashes items={defaultSplashes}/>
-      <Logo className={styles.logo}/>
       <div className={styles.contentArea}>
         <div className={styles.panelWrap}>
-          <h1 className={`col-heading ${styles.panelTitle}`}>{t("settings")}</h1>
+          <div className={styles.panelTitleWrap}>
+            <img src="./images/brush_paint.webp" alt="" className={styles.panelTitleBg}/>
+            <h1 className={styles.panelTitle}>{t("settings")}</h1>
+          </div>
           <div className={`col-panel ${styles.panel}`}>
             <div className={styles.row}>
               <FlagButton variant="tag" onClick={toggleSound}>{t("sound")}</FlagButton>
@@ -139,7 +141,7 @@ export function Settings({onOpenTutorial, onClose, onSupportAuthor}: {
             </div>
 
             <div className={styles.row}>
-              <FlagButton variant="tag" onClick={() => { playClick(); onSupportAuthor(); }}>{t("supportAuthor")}</FlagButton>
+              <FlagButton variant="tag" onClick={() => { playClick(); onSupportAuthor(); }}>{adsDisabled ? t("supportAuthor") : t("turnOffAds")}</FlagButton>
             </div>
 
             <div className={styles.row}>

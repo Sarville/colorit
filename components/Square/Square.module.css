@@ -14,12 +14,13 @@
        a soft top-left glare, a darker lower edge for roundness, and a bevel/drop shadow.
        Color-agnostic (white/black overlays) so it works over any tile color without knowing it. */
     background-image:
-        radial-gradient(120% 90% at 25% 15%, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0) 45%),
-        linear-gradient(to top, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0) 40%);
+        radial-gradient(55% 38% at 24% 16%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 62%),
+        radial-gradient(120% 90% at 25% 15%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 45%),
+        linear-gradient(to top, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 35%);
     box-shadow:
         inset 0 2px 0 rgba(255,255,255,0.55),
-        inset 0 -4px 5px rgba(0,0,0,0.25),
-        0 3px 3px rgba(0,0,0,0.25);
+        inset 0 -4px 5px rgba(0,0,0,0.14),
+        0 3px 6px rgba(20,50,90,0.18);
     transition: transform 0.06s ease;
 }
 .square:active {

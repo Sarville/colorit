@@ -20,8 +20,9 @@
 .navRow {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     max-width: 768px;
-    margin: auto;
+    margin: 0 auto 14px;
 }
 /* Bigger than the default .col-circle (48px) - this is the header's main navigation, it
    should read clearly rather than blend in with the smaller in-row icon buttons. */
@@ -40,6 +41,25 @@
 .iconCircle svg {
     width: 26px;
     height: 26px;
+}
+/* Narrow phones: shrink the header's circular buttons so the nav row and icon row have room
+   to breathe instead of crowding edge-to-edge. */
+@media (max-width: 380px) {
+    .navCircle, .iconCircle {
+        width: 44px;
+        height: 44px;
+    }
+    .navCircle svg {
+        width: 18px;
+        height: 18px;
+    }
+    .iconCircle svg {
+        width: 22px;
+        height: 22px;
+    }
+    .iconRow {
+        gap: 18px;
+    }
 }
 /* Wide-but-short viewports (phones/tablets rotated to landscape, or a short desktop window):
    the icon panel becomes a left sidebar and the board takes the rest of the width, instead of
@@ -105,26 +125,51 @@
 .statLine .statLabel::after {
     content: ":";
 }
-.centerColumn {
-    flex: 1;
+.levelLabelWrap {
+    position: relative;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 6px 0;
     min-width: 0;
 }
+.levelLabelBg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 145%;
+    max-width: 230px;
+    height: auto;
+    z-index: 0;
+    pointer-events: none;
+}
 .levelLabel {
-    margin: 0 0 14px;
-    padding: 10px 30px;
+    position: relative;
+    z-index: 1;
+    color: #1c3f66;
     font-size: 1.3rem;
     white-space: nowrap;
+    margin: 0;
+    padding: 6px 14px;
 }
 .iconRow {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 26px;
+}
+/* Wide-enough header: stats flank the icon row on one line instead of sitting in a row of
+   their own beneath it - a shorter header leaves more height for the board. */
+.statsRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 768px;
+    margin: 4px auto 0;
+    padding: 0 0.5rem;
+    box-sizing: border-box;
+    color: #1c3f66;
+    font-weight: 700;
 }
 .stats {
     display: flex;
@@ -146,12 +191,28 @@
     white-space: nowrap;
 }
 .statLabel {
-    color: #5b7fa6;
-    font-size: 0.95rem;
+    color: #1c3f66;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
 }
 .statValue {
     font-variant-numeric: tabular-nums;
-    font-size: 1.35rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+/* Plenty of room here (see isWideHeader in Game.tsx) - stats can afford to be bigger and
+   bolder than the narrow stacked .stats row above allows. */
+.statsRow .statLabel {
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+.statsRow .statValue {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
 }
 .statsRight {
     display: flex;
@@ -170,11 +231,12 @@
     padding: 1rem 1.5rem 1.5rem;
     overflow-y: auto;
 }
-/* Extra headroom above the board: in landscape some mobile browsers overlay their address
-   bar on top of the page instead of reserving space for it, so the board's regular 2rem
-   padding alone isn't a reliable enough buffer against it there. */
+/* Small extra headroom above the board: in landscape some mobile browsers overlay their
+   address bar on top of the page instead of reserving space for it. Kept modest - this
+   height comes straight out of the cqh-driven board size below, so overshooting here just
+   shrinks the board for no reason on the (far more common) browsers that don't overlay it. */
 .levelSidebar {
-    padding-top: 3.5rem;
+    padding-top: 0.75rem;
 }
 .gameBoard {
     width: 100%;

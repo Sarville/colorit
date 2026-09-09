@@ -15,10 +15,12 @@ export enum Color {
 
 export type ColorScheme = 0 | 1;
 
-// Lifted pixel-for-pixel from the original Android app's two texture atlases
-// (texture_colorscheme_0.png / texture_colorscheme_1.png), scheme 1 being colorblind-friendly.
+// Originally lifted pixel-for-pixel from the original Android app's two texture atlases
+// (texture_colorscheme_0.png / texture_colorscheme_1.png); scheme 0's blue/green/indigo were
+// later retuned more saturated for the paint-splash redesign. Scheme 1 (colorblind-friendly)
+// keeps its original values untouched.
 export const colorSchemes: Record<ColorScheme, Record<Exclude<Color, Color.none>, string>> = {
-  0: {[Color.red]: "#f51518", [Color.green]: "#689f38", [Color.blue]: "#68a6e5", [Color.yellow]: "#f6ca18", [Color.indigo]: "#7d6a6c"},
+  0: {[Color.red]: "#f51518", [Color.green]: "#4caf50", [Color.blue]: "#2f8ce0", [Color.yellow]: "#f6ca18", [Color.indigo]: "#795548"},
   1: {[Color.red]: "#bf4b00", [Color.green]: "#005585", [Color.blue]: "#59bbf2", [Color.yellow]: "#f6ca18", [Color.indigo]: "#9b9b9b"},
 };
 

@@ -229,7 +229,11 @@ export function Game() {
   useEffect(() => {
     const el = gameBoardRef.current;
     if (!el) return;
-    const observer = new ResizeObserver(([entry]) => setHeaderWidth(entry.contentRect.width));
+    // getBoundingClientRect (border-box), not entry.contentRect (content-box only) - the
+    // board is box-sizing:border-box with its own padding, so contentRect under-reported its
+    // actual on-screen width by exactly that padding, leaving the header narrower than the
+    // board it's supposed to match.
+    const observer = new ResizeObserver(() => setHeaderWidth(el.getBoundingClientRect().width));
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
@@ -250,6 +254,15 @@ export function Game() {
     mql.addEventListener("change", onChange);
     return () => mql.removeEventListener("change", onChange);
   }, []);
+
+  // Enough width fits the stats beside the icon row instead of stacked below it - a shorter
+  // header leaves more vertical room for the board, which matters most on tall narrow phones
+  // where every row of header height is a row the board doesn't get. Keyed off the header's
+  // own measured width (same ResizeObserver as the width-sync above), not the viewport - the
+  // header is capped to the board's width, which is usually well under the viewport, so a
+  // viewport-width breakpoint switched to this layout long before there was actually room for
+  // three 52px icon buttons plus four stat columns on one line, clipping "Оптимальный".
+  const isWideHeader = !isSidebar && headerWidth !== null && headerWidth >= 600;
 
   useEffect(() => {
     if (gameIsWon) {
@@ -333,6 +346,17 @@ export function Game() {
     })
   })
 
+  // Level data is a fixed rectangular grid, but some levels pad it with fully blank rows
+  // (every cell colorless, targetless and modifier-less) above/below the actual puzzle so
+  // unrelated levels can share one grid shape. Trimming those from the render (not from
+  // `game` itself - x/y indices throughout this file are array positions into the untrimmed
+  // grid) keeps the board panel hugging just the real rows instead of leaving empty space.
+  const isRowBlank = (row: Level[number]) =>
+    row.every((square) => square.color === Color.none && square.targetColor === Color.none && square.modifier === Modifier.none);
+  const firstVisibleRow = game.findIndex((row) => !isRowBlank(row));
+  const lastVisibleRow = game.length - 1 - [...game].reverse().findIndex((row) => !isRowBlank(row));
+  const visibleRowCount = firstVisibleRow === -1 ? game.length : lastVisibleRow - firstVisibleRow + 1;
+
   const best = levelProgress[pack][levelNumber].best;
   const optimal = levelOptimal[pack][levelNumber];
   // One of the 3 pre-cropped slogan stickers (see public/images/slogan_<lang>_<1-3>.webp),
@@ -366,8 +390,8 @@ export function Game() {
   return (
     <div className={`${styles.page} ${isSidebar ? styles.pageSidebar : ""}`}>
       <Splashes items={[
-        {src: "splash6", style: {top: "1%", left: "-12%", width: "22vw", maxWidth: 100, transform: "rotate(-10deg)"}},
-        {src: "splash3", style: {bottom: "1%", right: "-12%", width: "22vw", maxWidth: 100, transform: "rotate(12deg)"}},
+        {src: "splash6", style: {top: "1%", left: "-47px", width: "22vw", maxWidth: 100, transform: "rotate(-10deg)"}},
+        {src: "splash3", style: {bottom: "1%", right: "-47px", width: "22vw", maxWidth: 100, transform: "rotate(12deg)"}},
       ]}/>
       {isSidebar ? null : (
         <img
@@ -408,28 +432,49 @@ export function Game() {
           <>
             <div className={styles.navRow}>
               {previousButton}
-              <div className={styles.centerColumn}>
-                <p className={`col-heading ${styles.levelLabel}`}>{t("level")} {levelNumber + 1}</p>
-                {iconRow}
+              <div className={styles.levelLabelWrap}>
+                <img src="./images/brush_paint.webp" alt="" className={styles.levelLabelBg}/>
+                <p className={styles.levelLabel}>{t("level")} {levelNumber + 1}</p>
               </div>
               {nextButton}
             </div>
-            <div className={styles.stats}>
-              <div className={styles.statColumn}>
-                <span className={styles.statLabel}>{t("moves")}</span>
-                <span className={styles.statValue}>{moves}</span>
-              </div>
-              <div className={styles.statsRight}>
+            {isWideHeader ? null : iconRow}
+            {isWideHeader ? (
+              <div className={styles.statsRow}>
                 <div className={styles.statColumn}>
-                  <span className={styles.statLabel}>{t("best")}</span>
-                  <span className={styles.statValue}>{best ?? "-"}</span>
+                  <span className={styles.statLabel}>{t("moves")}</span>
+                  <span className={styles.statValue}>{moves}</span>
                 </div>
-                <div className={styles.statColumn}>
-                  <span className={styles.statLabel}>{t("optimal")}</span>
-                  <span className={styles.statValue}>{optimal ?? "-"}</span>
+                {iconRow}
+                <div className={styles.statsRight}>
+                  <div className={styles.statColumn}>
+                    <span className={styles.statLabel}>{t("best")}</span>
+                    <span className={styles.statValue}>{best ?? "-"}</span>
+                  </div>
+                  <div className={styles.statColumn}>
+                    <span className={styles.statLabel}>{t("optimal")}</span>
+                    <span className={styles.statValue}>{optimal ?? "-"}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className={styles.stats}>
+                <div className={styles.statColumn}>
+                  <span className={styles.statLabel}>{t("moves")}</span>
+                  <span className={styles.statValue}>{moves}</span>
+                </div>
+                <div className={styles.statsRight}>
+                  <div className={styles.statColumn}>
+                    <span className={styles.statLabel}>{t("best")}</span>
+                    <span className={styles.statValue}>{best ?? "-"}</span>
+                  </div>
+                  <div className={styles.statColumn}>
+                    <span className={styles.statLabel}>{t("optimal")}</span>
+                    <span className={styles.statValue}>{optimal ?? "-"}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -439,14 +484,16 @@ export function Game() {
         <div
           ref={gameBoardRef}
           className={`col-panel ${styles.gameBoard}`}
-          style={{"--rows": game.length, "--cols": game[0]?.length ?? 1} as CSSProperties}
+          style={{"--rows": visibleRowCount, "--cols": game[0]?.length ?? 1} as CSSProperties}
         >
           {game.map((row, index) => (
-            <div key={index} className={styles.row}>
-              {row.map((square) => (
-                <Square key={square.key} {...square} />
-              ))}
-            </div>
+            index < firstVisibleRow || index > lastVisibleRow ? null : (
+              <div key={index} className={styles.row}>
+                {row.map((square) => (
+                  <Square key={square.key} {...square} />
+                ))}
+              </div>
+            )
           ))}
         </div>
       </div>

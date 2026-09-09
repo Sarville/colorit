@@ -90,7 +90,6 @@ export const levelOptimal: levelOptimalProps = {
 //  Update game screen one square at a time so you get a nice flow, e.g. medium 47
 //  Jest tests
 //  Fix all the ts-ignore errors.
-//  Handle back button (move from game back to level select)
 
 
 const defaultPack: packChoices = "Easy"
@@ -177,13 +176,13 @@ export default function Home() {
     isSignedIn().then((result) => {
       setSignedIn(result);
       if (result === false) {
-        setShowAuthPrompt(true);
+        openAuthPrompt();
       }
     });
   }, []);
 
   function handleSignIn() {
-    setShowAuthPrompt(false);
+    closeAuthPrompt();
     openAuthDialog().then(() => isSignedIn()).then(setSignedIn);
   }
 
@@ -224,8 +223,56 @@ export default function Home() {
     setLevelProgress(() => progress);
   }
 
+  // Every in-app navigation pushes a history entry tagged with the screen (and, for the two
+  // full-screen modals, which one) it lands on, so the browser/OS back button (which otherwise
+  // just leaves the page - it's a SPA with no routing) steps back through the app instead. Going
+  // back re-reads the *previous* entry's state, which is whatever was current when this push
+  // happened - i.e. exactly where this navigation/modal-open came from.
+  type HistoryState = {screen: screens, modal?: "auth" | "support"};
+
+  function navigateTo(screen: screens) {
+    window.history.pushState({screen} satisfies HistoryState, "");
+    setCurrentScreen(screen);
+  }
+
+  function openAuthPrompt() {
+    window.history.pushState({screen: currentScreen, modal: "auth"} satisfies HistoryState, "");
+    setShowAuthPrompt(true);
+  }
+
+  function closeAuthPrompt() {
+    window.history.back();
+  }
+
+  function openSupportModal() {
+    window.history.pushState({screen: currentScreen, modal: "support"} satisfies HistoryState, "");
+    setShowSupportModal(true);
+  }
+
+  function closeSupportModal() {
+    window.history.back();
+  }
+
+  useEffect(() => {
+    window.history.replaceState({screen: screens.MainMenu} satisfies HistoryState, "");
+    function onPopState(event: PopStateEvent) {
+      const state = event.state as HistoryState | null;
+      // Closing via the back button (rather than the modal's own close button) never fires
+      // openAuthPrompt/openSupportModal again, so these read/write current state through the
+      // updater form instead of depending on (necessarily stale, this effect only runs once)
+      // showAuthPrompt/showSupportModal from the outer closure.
+      setShowAuthPrompt((wasOpen) => wasOpen && state?.modal !== "auth" ? false : wasOpen);
+      setShowSupportModal((wasOpen) => wasOpen && state?.modal !== "support" ? false : wasOpen);
+      if (state?.screen) {
+        setCurrentScreen(state.screen);
+      }
+    }
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
   function changeCurrentScreen(screen: screens) {
-    setCurrentScreen(() => screen)
+    navigateTo(screen)
   }
 
   function changePack(pack: packChoices) {
@@ -246,7 +293,7 @@ export default function Home() {
 
   function openSettings() {
     setScreenBeforeSettings(currentScreen)
-    setCurrentScreen(screens.Settings)
+    navigateTo(screens.Settings)
   }
 
   if (vkRequiredButMissing) {
@@ -277,19 +324,19 @@ export default function Home() {
         >
           <Header/>
           {showAuthPrompt ? (
-            <AuthPrompt onSignIn={handleSignIn} onDismiss={() => setShowAuthPrompt(false)}/>
+            <AuthPrompt onSignIn={handleSignIn} onDismiss={closeAuthPrompt}/>
           ) : null}
           {showSupportModal ? (
             <SupportAuthorModal
               adsDisabled={adsDisabled}
               onSupport={handleSupportAuthor}
-              onClose={() => setShowSupportModal(false)}
+              onClose={closeSupportModal}
             />
           ) : null}
           <main>
             {currentScreen === screens.MainMenu ? (
               <MainMenu
-                onStart={() => setCurrentScreen(screens.SelectPack)}
+                onStart={() => navigateTo(screens.SelectPack)}
                 onSettings={openSettings}
                 showSignIn={signedIn === false}
                 onSignIn={handleSignIn}
@@ -300,13 +347,14 @@ export default function Home() {
             {currentScreen === screens.Game ? <Game/> : null}
             {currentScreen === screens.Settings ? (
               <Settings
-                onOpenTutorial={() => setCurrentScreen(screens.Tutorial)}
-                onClose={() => setCurrentScreen(screenBeforeSettings)}
-                onSupportAuthor={() => setShowSupportModal(true)}
+                onOpenTutorial={() => navigateTo(screens.Tutorial)}
+                onClose={() => navigateTo(screenBeforeSettings)}
+                onSupportAuthor={openSupportModal}
+                adsDisabled={adsDisabled}
               />
             ) : null}
             {currentScreen === screens.Tutorial ? (
-              <Tutorial onClose={() => setCurrentScreen(screens.Settings)}/>
+              <Tutorial onClose={() => navigateTo(screens.Settings)}/>
             ) : null}
           </main>
         </LevelContext.Provider>

@@ -12,6 +12,16 @@ body {
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
 }
+/* Mobile Chrome/Safari default tap highlight and focus ring: a plain rectangle flashed (or
+   left lingering after tap) over whatever was tapped, regardless of the element's actual
+   (often round or flag-shaped) visual shape - desktop has no equivalent, so it only ever
+   showed up on phones. Not just buttons/links: several controls here are a plain span/div
+   with an onClick (the language row's "RU" indicator, the sound/music toggle icons, the
+   color-scheme swatch preview), and those get the same tap highlight on anything clickable. */
+* {
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+}
 .col-bg {
     background-color: #eaf4ff;
 }
@@ -54,14 +64,14 @@ body {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    border: 1px solid #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.7);
     background:
         radial-gradient(120% 90% at 30% 10%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 45%),
         linear-gradient(180deg, #ffffff 0%, #eef4fc 55%, #dbe7f7 100%);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.9),
         inset 0 -3px 4px rgba(130, 165, 210, 0.4),
-        0 2px 4px rgba(40, 70, 120, 0.22);
+        0 5px 10px rgba(30, 60, 110, 0.38);
     color: #2b6cb0;
     cursor: pointer;
     flex-shrink: 0;
@@ -110,13 +120,18 @@ body {
    next/image) because the static export ships under an arbitrary sub-path - see the
    asset-path note in Header.tsx. A relative "./images/..." src on an <img> resolves against
    the page URL and survives that, where a CSS url() or next/image srcset would not. */
+/* object-fit:fill (paired with preserveAspectRatio="none" in bg.svg) stretches the artwork
+   to exactly match the viewport instead of cropping it - a "cover" crop on this wide 16:9
+   canvas hid the corner color blobs entirely on portrait phones (only the plain center
+   gradient survived the crop). Stretching keeps every blob's relative corner position intact
+   at any aspect ratio; the shapes are soft blurred blobs, so the non-uniform scale isn't
+   noticeable. */
 .col-bg {
     position: fixed;
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    object-position: center;
+    object-fit: fill;
     z-index: -1;
     pointer-events: none;
 }

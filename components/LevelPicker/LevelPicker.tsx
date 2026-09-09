@@ -3,9 +3,8 @@ import {LevelContext, levelOptimal, levels, screens} from "@/pages";
 import {useLanguage} from "@/i18n/LanguageContext";
 import {packNames} from "@/i18n/translations";
 import {playClick} from "@/lib/sound";
-import {Logo} from "@/components/Logo";
 import {Splashes, defaultSplashes} from "@/components/Splashes";
-import {ChevronLeftIcon} from "@/components/icons";
+import {FlagButton} from "@/components/FlagButton";
 import styles from "./LevelPicker.module.css"
 
 export function LevelPicker() {
@@ -17,17 +16,19 @@ export function LevelPicker() {
   return (
     <div className={styles.page}>
       <Splashes items={defaultSplashes}/>
-      <button
-        className={`col-circle ${styles.backButton}`}
-        onClick={() => { playClick(); changeCurrentScreen(screens.SelectPack); }}
-        aria-label={t("back")}
-      >
-        <ChevronLeftIcon/>
-      </button>
-      <Logo className={styles.logo}/>
       <div className={styles.contentArea}>
-        <div className="col-heading">{packNames[language][pack]}</div>
-        <h1 className={styles.subtitle}>{t("selectLevel")}</h1>
+        <FlagButton
+          pointLeft
+          className={styles.packBadge}
+          onClick={() => { playClick(); changeCurrentScreen(screens.SelectPack); }}
+          aria-label={t("back")}
+        >
+          {packNames[language][pack]}
+        </FlagButton>
+        <div className={styles.subtitleWrap}>
+          <img src="./images/brush_paint.webp" alt="" className={styles.subtitleBg}/>
+          <h1 className={styles.subtitle}>{t("selectLevel")}</h1>
+        </div>
         <div className={styles.pickerArea}>
           {levels[pack].map((_level, index) => {
             const progress = levelProgress[pack][index];
@@ -43,7 +44,7 @@ export function LevelPicker() {
                 }}
                 className={`${styles.levelTile} ${isHighlighted ? styles.current : ""}`}
               >
-                {isOptimal ? <div className={styles.star}/> : null}
+                {isOptimal ? <img src="./images/star.webp" alt="" className={styles.star}/> : null}
                 {progress.status === "locked" ? <div className={styles.tileIcon}/> : null}
                 {progress.status === "complete" ? <div className={`${styles.tileIcon} ${styles.tileCheck}`}/> : null}
                 <span className={styles.tileNumber}>{index + 1}</span>

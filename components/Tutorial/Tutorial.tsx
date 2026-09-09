@@ -2,7 +2,6 @@ import {useState} from "react";
 import {useLanguage} from "@/i18n/LanguageContext";
 import {playClick} from "@/lib/sound";
 import {Color, Modifier, Square} from "@/components/Square/Square";
-import {Logo} from "@/components/Logo";
 import {Splashes, defaultSplashes} from "@/components/Splashes";
 import {FlagButton} from "@/components/FlagButton";
 import styles from "./Tutorial.module.css";
@@ -52,9 +51,11 @@ export function Tutorial({onClose}: { onClose: () => void }) {
   return (
     <div className={styles.page} onClick={next}>
       <Splashes items={defaultSplashes}/>
-      <Logo className={styles.logo}/>
       <div className={`col-panel ${styles.card}`}>
-        <h1 className="col-heading">{t("howToPlay")}</h1>
+        <div className={styles.headingWrap}>
+          <img src="./images/brush_paint.webp" alt="" className={styles.headingBg}/>
+          <h1 className={styles.heading}>{t("howToPlay")}</h1>
+        </div>
 
         {slide === 0 ? (
           <div className={styles.slide}>
@@ -88,7 +89,7 @@ export function Tutorial({onClose}: { onClose: () => void }) {
         )}
       </div>
 
-      <FlagButton className={styles.next} onClick={next}>{slide < lastSlide ? t("tapToContinue") : t("tutorialClose")}</FlagButton>
+      <FlagButton dense className={styles.next} onClick={next}>{slide < lastSlide ? t("tapToContinue") : t("tutorialClose")}</FlagButton>
     </div>
   );
 }
