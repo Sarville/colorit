@@ -54,7 +54,8 @@ rsync -az --delete out/ server-games:/opt/games/site/vk/colorit/
 ```
 (`server-games` is an SSH alias; ask whoever set up the server for access.) The server also runs a
 small Caddy config and a `vk-payments-colorit` Node service (payments webhook + VK launch-params
-auth gate) that live only on the server, not in this repo - see
+auth gate), tracked in [`ops/`](./ops/) - see [`ops/README.md`](./ops/README.md) for how to deploy
+changes to them (a `git commit` alone doesn't touch the live server). Read
 [`docs/vk-gotchas.md`](./docs/vk-gotchas.md) before touching anything VK-related, it covers several
 non-obvious traps (payments response shape, storage size limits, Caddy config quirks, launch-auth
 signature) that already cost real debugging time once.

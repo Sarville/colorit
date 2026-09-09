@@ -12,7 +12,7 @@ of these cost real debugging time - recorded here so the next person doesn't rep
   `status` field at all. Checking `result.status !== "success"` silently always fails (`status` is
   `undefined`), even though the purchase actually went through. Check `result.success` instead
   (see `lib/support.ts`, `@ts-ignore`d since the installed types disagree).
-- **The payments webhook (`vk-payments/server.js` on the server, not in this repo) must handle
+- **The payments webhook (`ops/vk-payments/server.js`) must handle
   `notification_type` with a `_test` suffix.** VK's "Тестовый" button in the app's payments
   cabinet sends the exact same notifications (`get_item_test`, `order_status_change_test`)
   instead of the real ones - strip the `_test` suffix before comparing, or the sandbox probe gets
@@ -105,11 +105,11 @@ of these cost real debugging time - recorded here so the next person doesn't rep
   hotlink/cache/auth gating described above. The payments + launch-auth service
   (`vk-payments-colorit` container, code at `/opt/games/vk-payments/server.js` on the host,
   bind-mounted) needs `docker restart vk-payments-colorit` after any edit - it doesn't hot-reload.
-- **`Caddyfile` and `vk-payments/server.js` are server-only files, not part of this git repo.**
-  There is no version control for them beyond manual timestamped `.bak-*` copies made ad hoc next
-  to the originals during editing. If a future session touches VK auth/payments/caching config,
-  consider bringing these under version control (e.g. a small ops repo) instead of continuing to
-  rely on `.bak-*` copies.
+- `Caddyfile` and `vk-payments/server.js` are tracked in this repo under [`ops/`](../ops/) -
+  see [`ops/README.md`](../ops/README.md) for the deploy steps. They are **not** deployed
+  automatically; a `git commit` here does nothing to the live server on its own. If you ever edit
+  them directly over SSH during an incident, copy the final version back into `ops/` and commit -
+  otherwise the repo silently drifts from what's actually running.
 - Caddy directive gotcha: `respond`/`header` get silently re-sorted by Caddy's default directive
   order unless the whole block is wrapped in `route { ... }` - a hotlink-protection `respond 403`
   silently never fired because it ran after `file_server` had already answered the request. Always
