@@ -1,3 +1,5 @@
+import {isVkEnvironment} from "./vkSdk";
+
 declare global {
   interface Window {
     YaGames?: { init: () => Promise<YandexSdk> };
@@ -47,11 +49,14 @@ export type YandexPayments = {
 let ysdkPromise: Promise<YandexSdk | null> | null = null;
 
 // Resolves to the SDK only inside the real Yandex Games iframe. The loader script sets
-// window.YaGames even when the build is opened standalone (e.g. GitHub Pages), but init()
-// then rejects because there's no parent frame to talk to - so that failure is swallowed
-// here and treated the same as "SDK not present", keeping the game playable standalone.
+// window.YaGames even when the build is opened standalone (e.g. GitHub Pages) or inside VK, but
+// init() then either rejects or - inside VK specifically - hangs for a long time logging
+// "[SDK] too long resolve for method 'loadEnvironment'" while it waits for a Yandex parent frame
+// that will never reply. isVkEnvironment() is checked first so every getYsdk() caller (ads,
+// cloud save, auth, purchases, ...) resolves to null immediately in that case instead of stalling
+// on an RPC call that was never going to succeed.
 export function getYsdk(): Promise<YandexSdk | null> {
-  if (typeof window === "undefined" || !window.YaGames) {
+  if (typeof window === "undefined" || !window.YaGames || isVkEnvironment()) {
     return Promise.resolve(null);
   }
   if (!ysdkPromise) {

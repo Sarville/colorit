@@ -59,8 +59,9 @@ export const translations = {
     supportAuthor: "Поддержать автора",
     supportBeforeText: "Нравится игра? Поддержите разработку — после этого реклама в игре отключится.",
     supportAfterText: "Реклама уже отключена — спасибо за поддержку! Если хотите, можно поддержать ещё раз.",
-    supportButton: "Поддержать",
-    supportAgainButton: "Поддержать ещё раз",
+    supportButton: "Отключить рекламу — 100 ₽",
+    supportAgainButton: "Поддержать автора — 100 ₽",
+    supportFailedText: "Не получилось оформить покупку. Попробуйте ещё раз чуть позже.",
     close: "Закрыть",
   },
   en: {
@@ -101,8 +102,9 @@ export const translations = {
     supportAuthor: "Support the author",
     supportBeforeText: "Enjoying the game? Support its development — this also turns off ads.",
     supportAfterText: "Ads are already off — thanks for your support! You're welcome to support again if you'd like.",
-    supportButton: "Support",
-    supportAgainButton: "Support again",
+    supportButton: "Turn off ads — 100 ₽",
+    supportAgainButton: "Support the author — 100 ₽",
+    supportFailedText: "The purchase didn't go through. Please try again in a moment.",
     close: "Close",
   },
 } satisfies Record<Language, Record<string, string>>;

@@ -5,16 +5,19 @@ import styles from "./SupportAuthorModal.module.css";
 
 export function SupportAuthorModal({adsDisabled, onSupport, onClose}: {
   adsDisabled: boolean,
-  onSupport: () => Promise<void>,
+  onSupport: () => Promise<boolean>,
   onClose: () => void,
 }) {
   const {t} = useLanguage();
   const [purchasing, setPurchasing] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   async function handleSupport() {
     playClick();
     setPurchasing(true);
-    await onSupport();
+    setFailed(false);
+    const success = await onSupport();
+    setFailed(!success);
     setPurchasing(false);
   }
 
@@ -22,6 +25,7 @@ export function SupportAuthorModal({adsDisabled, onSupport, onClose}: {
     <div className={styles.modal}>
       <div className={styles.dialog}>
         <p>{adsDisabled ? t("supportAfterText") : t("supportBeforeText")}</p>
+        {failed ? <p className={styles.error}>{t("supportFailedText")}</p> : null}
         <button className={styles.support} disabled={purchasing} onClick={handleSupport}>
           {adsDisabled ? t("supportAgainButton") : t("supportButton")}
         </button>

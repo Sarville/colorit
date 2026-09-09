@@ -37,17 +37,20 @@ export async function maybeShowLevelCompleteAd() {
   }
   const vk = getVkBridge();
   if (!vk) {
+    console.error("No ad provider available (not running in Yandex Games or VK)");
     return;
   }
   try {
     const {result: available} = await vk.send("VKWebAppCheckNativeAds", {ad_format: "interstitial"});
     if (!available) {
+      console.error("VK reports no native ad available (ad_format: interstitial)");
       return;
     }
     lastShownAt = now;
     pauseAllAudio();
     await vk.send("VKWebAppShowNativeAds", {ad_format: "interstitial"});
-  } catch {
+  } catch (err) {
+    console.error("VK ad failed", err);
     lastShownAt = 0; // let the next level completion retry
   } finally {
     resumeAllAudio();

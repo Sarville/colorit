@@ -14,6 +14,14 @@ export async function isAdsDisabled(): Promise<boolean> {
   return (await loadProgress<boolean>(ADS_DISABLED_KEY)) === true;
 }
 
+// Testing-only: lets a `?resetProgress` URL param wipe this device/account's "already bought"
+// flag so the purchase flow can be re-tested. Only ever clears the caller's own entitlement flag,
+// never a real order - VK doesn't track "already purchased" for this item either, so it's safe to
+// re-trigger VKWebAppShowOrderBox afterward.
+export async function resetSupportState(): Promise<void> {
+  await saveProgress(false, ADS_DISABLED_KEY);
+}
+
 // Yandex purchases are consumable: consumePurchase() deletes the record so the product can be
 // bought again (needed here since "support again" must stay available after the first buy). If
 // the tab closes between purchase() resolving and consumePurchase() running, the purchase is left
@@ -48,22 +56,30 @@ export async function purchaseSupportAuthor(): Promise<boolean> {
       await saveProgress(true, ADS_DISABLED_KEY);
       await payments.consumePurchase(purchase.purchaseToken).catch(() => {});
       return true;
-    } catch {
+    } catch (err) {
+      console.error("Yandex purchase failed", err);
       return false;
     }
   }
   const vk = getVkBridge();
   if (vk) {
     try {
-      const {status} = await vk.send("VKWebAppShowOrderBox", {type: "item", item: SUPPORT_PRODUCT_ID});
-      if (status !== "success") {
+      const result = await vk.send("VKWebAppShowOrderBox", {type: "item", item: SUPPORT_PRODUCT_ID});
+      // @vkontakte/vk-bridge's types claim {status: 'success'|'cancel'|'fail'}, but the real VK
+      // client responds with {success: boolean} - confirmed from a live response:
+      // {"success":true,"order_id":"2357856"}. Trust the observed shape over the package's types.
+      // @ts-ignore
+      if (!result.success) {
+        console.error("VK purchase failed, full response:", JSON.stringify(result));
         return false;
       }
       await saveProgress(true, ADS_DISABLED_KEY);
       return true;
-    } catch {
+    } catch (err) {
+      console.error("VK purchase rejected, full error:", JSON.stringify(err));
       return false;
     }
   }
+  console.error("No payment provider available (not running in Yandex Games or VK)");
   return false;
 }

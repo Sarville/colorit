@@ -21,7 +21,7 @@ import {initVkBridge, isVkEnvironment} from "@/lib/vkSdk";
 import {playGameMusic, playMenuMusic} from "@/lib/music";
 import {loadProgress, saveProgress} from "@/lib/cloudSave";
 import {isSignedIn, openAuthDialog} from "@/lib/yandexAuth";
-import {isAdsDisabled, purchaseSupportAuthor, restoreYandexPurchases} from "@/lib/support";
+import {isAdsDisabled, purchaseSupportAuthor, resetSupportState, restoreYandexPurchases} from "@/lib/support";
 
 export const enum screens {
   MainMenu = "MainMenu",
@@ -59,6 +59,16 @@ export const levelProgressDefault: levelPackProgressProps = {
   "Hard": HardDefaultProgress,
   "Community": CommunityDefaultProgress,
 }
+
+// VK's storage API caps each key's value at 4096 bytes - all four packs combined under one
+// "levelProgress" key runs well past that (~6KB with real progress), so VKWebAppStorageSet
+// silently failed and progress fell back to this device's localStorage instead of VK's account
+// storage (that's why the purchase, saved under its own small key, survived but levels didn't).
+// One key per pack keeps each save comfortably under the limit.
+// ponytail: Community is user-submitted and could eventually grow past the limit on its own;
+// split it further (e.g. by community level id range) if that ever happens.
+const progressKeyForPack = (pack: packChoices) => `levelProgress_${pack}`;
+const packChoicesList: Array<packChoices> = ["Easy", "Medium", "Hard", "Community"];
 
 type levelOptimalProps = {
   "Easy": Array<number | null>,
@@ -119,9 +129,27 @@ export default function Home() {
   const [adsDisabled, setAdsDisabled] = useState(false);
 
   useEffect(() => {
-    loadProgress<levelPackProgressProps>().then((progress) => {
-      if (progress) {
-        setLevelProgress(progress);
+    // Testing-only: `?resetProgress` in the URL skips the load entirely, so levelProgress stays
+    // at levelProgressDefault and the save effect below then overwrites the stored keys with it -
+    // an easy way to test the fresh-install flow without clearing VK storage by hand.
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("resetProgress")) {
+      resetSupportState();
+      setProgressLoaded(true);
+      return;
+    }
+    Promise.all(
+      packChoicesList.map((pack) => loadProgress<Array<levelProgressProps>>(progressKeyForPack(pack)))
+    ).then((perPack) => {
+      const merged = {...levelProgressDefault};
+      let hasAny = false;
+      packChoicesList.forEach((pack, i) => {
+        if (perPack[i]) {
+          merged[pack] = perPack[i]!;
+          hasAny = true;
+        }
+      });
+      if (hasAny) {
+        setLevelProgress(merged);
       }
       // Only allow saving once the initial cloud/local read has resolved, otherwise a save
       // effect triggered before it completes could overwrite real progress with the defaults.
@@ -138,6 +166,10 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("resetProgress")) {
+      setAdsDisabled(false);
+      return;
+    }
     restoreYandexPurchases().then(() => isAdsDisabled()).then(setAdsDisabled);
   }, []);
 
@@ -179,7 +211,7 @@ export default function Home() {
 
   useEffect(() => {
     if (progressLoaded) {
-      saveProgress(levelProgress);
+      packChoicesList.forEach((pack) => saveProgress(levelProgress[pack], progressKeyForPack(pack)));
     }
   }, [levelProgress, progressLoaded]);
 
@@ -204,10 +236,12 @@ export default function Home() {
     setLastExitedLevel(level)
   }
 
-  async function handleSupportAuthor() {
-    if (await purchaseSupportAuthor()) {
+  async function handleSupportAuthor(): Promise<boolean> {
+    const success = await purchaseSupportAuthor();
+    if (success) {
       setAdsDisabled(true);
     }
+    return success;
   }
 
   function openSettings() {

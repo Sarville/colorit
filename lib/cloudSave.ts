@@ -26,7 +26,8 @@ export async function loadProgress<T>(key: string = PROGRESS_KEY): Promise<T | n
       const {keys} = await vk.send("VKWebAppStorageGet", {keys: [key]});
       const raw = keys.find((entry) => entry.key === key)?.value;
       return raw ? (JSON.parse(raw) as T) : null;
-    } catch {
+    } catch (err) {
+      console.error(`VK storage load failed for key "${key}"`, err);
       return null;
     }
   }
@@ -50,8 +51,10 @@ export async function saveProgress(progress: unknown, key: string = PROGRESS_KEY
     try {
       await vk.send("VKWebAppStorageSet", {key, value: JSON.stringify(progress)});
       return;
-    } catch {
-      // fall through to localStorage
+    } catch (err) {
+      // VK's storage API caps each value at 4096 bytes - a save this size regularly means a
+      // caller is putting too much under one key, not a transient failure.
+      console.error(`VK storage save failed for key "${key}", falling back to localStorage`, err);
     }
   }
   localStorage.setItem(key, JSON.stringify(progress));
