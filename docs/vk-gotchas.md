@@ -82,6 +82,15 @@ of these cost real debugging time - recorded here so the next person doesn't rep
   `window.YaGames.init()` entirely when `isVkEnvironment()`, **and** the VK-only build
   (`NEXT_PUBLIC_REQUIRE_VK=true`) omits the `<script>` tag from `Header.tsx` altogether, so it never
   loads at all in that build.
+- **`window.YaGames.init()` resolves successfully even completely outside Yandex Games** (plain
+  localhost, no parent frame at all) - it does not reject or hang there, it silently falls back to
+  an offline/"lite" environment instead (logging `Can not get appId from environment` but still
+  settling the promise). So `getYsdk() !== null` is **not** a valid "is this really Yandex Games"
+  check - it's true in local dev too. The one field that actually tells them apart is
+  `ysdk.environment.app.id`: non-empty only inside a real Yandex parent frame, `""` in the
+  fallback mode. Used by `lib/support.ts`'s `isOnKnownPlatform()` to gate the post-purchase
+  thank-you animation (shown unconditionally when neither a real Yandex nor a VK launch is
+  detected, since there's no real payment to check in that case).
 
 ## Next.js static export + relative asset paths
 

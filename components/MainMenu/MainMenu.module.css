@@ -15,6 +15,17 @@
     margin-top: 3vh;
 }
 
+.thankYou {
+    position: absolute;
+    bottom: 2%;
+    right: -20px;
+    width: 32vw;
+    max-width: 150px;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+}
+
 .buttons {
     flex: 1;
     width: 100%;

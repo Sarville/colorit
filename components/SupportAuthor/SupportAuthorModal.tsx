@@ -26,11 +26,15 @@ export function SupportAuthorModal({adsDisabled, onSupport, onClose}: {
     <div className={styles.modal}>
       <div className={`col-panel ${styles.dialog}`}>
         <p>{adsDisabled ? t("supportAfterText") : t("supportBeforeText")}</p>
+        <p className={styles.thankYouNote}>
+          {t("supportThankYouNote")}
+          <img src="./images/thankyou_small.webp" alt="" aria-hidden="true" className={styles.thankYouPreview}/>
+        </p>
         {failed ? <p className={styles.error}>{t("supportFailedText")}</p> : null}
-        <FlagButton disabled={purchasing} onClick={handleSupport}>
+        <FlagButton dense disabled={purchasing} onClick={handleSupport}>
           {adsDisabled ? t("supportAgainButton") : t("supportButton")}
         </FlagButton>
-        <FlagButton ghost onClick={() => { playClick(); onClose(); }}>{t("close")}</FlagButton>
+        <FlagButton dense ghost onClick={() => { playClick(); onClose(); }}>{t("close")}</FlagButton>
       </div>
     </div>
   );

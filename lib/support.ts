@@ -1,5 +1,5 @@
 import {getYsdk} from "./yandexSdk";
-import {getVkBridge} from "./vkSdk";
+import {getVkBridge, isVkEnvironment} from "./vkSdk";
 import {loadProgress, saveProgress} from "./cloudSave";
 
 // This is the product/item ID to register in each platform's dashboard:
@@ -42,6 +42,30 @@ export async function restoreYandexPurchases(): Promise<void> {
   }
   await saveProgress(true, ADS_DISABLED_KEY);
   await Promise.all(own.map((purchase) => payments.consumePurchase(purchase.purchaseToken).catch(() => {})));
+}
+
+// True once there's a real platform to have bought anything on: VK's launch params are present
+// (whether or not this particular load happens to be framed - a valid vk_user_id/sign pair means
+// a real VK session either way), or the Yandex SDK reports a real app id. getYsdk() itself
+// resolves non-null even outside Yandex Games (it falls back to an offline/"lite" mode rather
+// than rejecting), so `!== null` alone can't tell real Yandex apart from local/standalone - only
+// `environment.app.id` being non-empty means an actual Yandex parent frame answered.
+async function isOnKnownPlatform(): Promise<boolean> {
+  if (isVkEnvironment()) {
+    return true;
+  }
+  const ysdk = await getYsdk();
+  return !!ysdk?.environment?.app?.id;
+}
+
+// The thank-you animation on the main menu doubles as proof of purchase, so it must never even
+// be requested from the server without one - except in a standalone/dev build, where it should
+// always be visible (there's no real payment to gate it behind while testing it).
+export async function shouldShowThankYouAnimation(adsDisabled: boolean): Promise<boolean> {
+  if (adsDisabled) {
+    return true;
+  }
+  return !(await isOnKnownPlatform());
 }
 
 export async function purchaseSupportAuthor(): Promise<boolean> {

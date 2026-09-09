@@ -340,6 +340,7 @@ export default function Home() {
                 onSettings={openSettings}
                 showSignIn={signedIn === false}
                 onSignIn={handleSignIn}
+                adsDisabled={adsDisabled}
               />
             ) : null}
             {currentScreen === screens.SelectPack ? <SelectPack/> : null}

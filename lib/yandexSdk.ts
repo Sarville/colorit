@@ -18,7 +18,11 @@ export type YandexSdk = {
     LoadingAPI?: { ready: () => void };
     GameplayAPI?: { start: () => void; stop: () => void };
   };
-  environment?: { i18n?: { lang?: string } };
+  // `environment.app.id` is only non-empty inside a real Yandex Games parent frame - the SDK
+  // still resolves outside of one (falling back to a "lite"/offline mode instead of rejecting),
+  // logging "Can not get appId from environment" and leaving this "" - see lib/support.ts's
+  // isOnKnownPlatform(), which relies on that to tell a real Yandex launch from local/standalone.
+  environment?: { app?: { id?: string }, i18n?: { lang?: string } };
   adv: {
     showFullscreenAdv: (params: {
       callbacks?: {

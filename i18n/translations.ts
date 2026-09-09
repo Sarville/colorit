@@ -63,6 +63,7 @@ export const translations = {
     supportButton: "Поддержать — 100 ₽",
     supportAgainButton: "Поддержать — 100 ₽",
     supportFailedText: "Не получилось оформить покупку. Попробуйте ещё раз чуть позже.",
+    supportThankYouNote: "А ещё в знак благодарности на главном экране появится эта анимация:",
     close: "Закрыть",
   },
   en: {
@@ -107,6 +108,7 @@ export const translations = {
     supportButton: "Support — 100 ₽",
     supportAgainButton: "Support — 100 ₽",
     supportFailedText: "The purchase didn't go through. Please try again in a moment.",
+    supportThankYouNote: "As a thank-you, this animation will also appear on the main screen:",
     close: "Close",
   },
 } satisfies Record<Language, Record<string, string>>;
