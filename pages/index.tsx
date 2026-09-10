@@ -22,6 +22,7 @@ import {playGameMusic, playMenuMusic} from "@/lib/music";
 import {loadProgress, saveProgress} from "@/lib/cloudSave";
 import {isSignedIn, openAuthDialog} from "@/lib/yandexAuth";
 import {isAdsDisabled, purchaseSupportAuthor, resetSupportState, restoreYandexPurchases} from "@/lib/support";
+import {updateStickyBanner} from "@/lib/ads";
 import {
   clearDailyHistory, DailyHistoryData, DailyTile, ensureTodayEntry, flattenDailyHistory,
   peekDailyHistory, recordDailyBest, saveDailyHistory, totalDailyScore,
@@ -184,9 +185,13 @@ export default function Home() {
   useEffect(() => {
     if (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("resetProgress")) {
       setAdsDisabled(false);
+      updateStickyBanner(false);
       return;
     }
-    restoreYandexPurchases().then(() => isAdsDisabled()).then(setAdsDisabled);
+    restoreYandexPurchases().then(() => isAdsDisabled()).then((disabled) => {
+      setAdsDisabled(disabled);
+      updateStickyBanner(disabled);
+    });
   }, []);
 
   useEffect(() => {
@@ -332,6 +337,7 @@ export default function Home() {
     const success = await purchaseSupportAuthor();
     if (success) {
       setAdsDisabled(true);
+      updateStickyBanner(true);
     }
     return success;
   }

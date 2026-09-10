@@ -32,6 +32,11 @@ export type YandexSdk = {
         onOffline?: () => void;
       };
     }) => void;
+    // Sticky banner - only fires on our command because the Yandex Games cabinet has "Use the
+    // API to display a sticky-banner" enabled; with that on, the banner does NOT appear on its
+    // own the way it would by default, so skipping this call means no banner ever shows.
+    showBannerAdv: () => Promise<{stickyAdvIsShowing: boolean; reason?: string}>;
+    hideBannerAdv: () => Promise<{stickyAdvIsShowing: boolean}>;
   };
   auth?: { openAuthDialog: () => Promise<void> };
   getPlayer: (options?: { scopes?: boolean }) => Promise<YandexPlayer>;

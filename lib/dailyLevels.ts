@@ -188,7 +188,7 @@ export function recordDailyBest(history: DailyHistoryData, date: string, slotInd
     scored[slotIndex] = dailyScoreForSlot(entry.difficulty, entry.optimal, moves, day.date === today);
     return {...day, best, scored};
   });
-  return {days};
+  return {...history, days};
 }
 
 export function totalDailyScore(history: DailyHistoryData | null): number {

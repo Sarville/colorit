@@ -3,6 +3,19 @@ import {getVkBridge} from "./vkSdk";
 import {pauseAllAudio, resumeAllAudio} from "./audioFocus";
 import {isAdsDisabled} from "./support";
 
+// Yandex-only: the sticky banner (position/API-control configured in the Yandex Games cabinet,
+// see docs/vk-gotchas.md) has no VK equivalent in this codebase. getYsdk() resolves to a non-null
+// "lite" SDK even outside a real Yandex frame (see lib/yandexSdk.ts), so calling showBannerAdv()
+// there is harmless - it just reports ADV_IS_NOT_CONNECTED and is swallowed here.
+export async function updateStickyBanner(adsDisabled: boolean): Promise<void> {
+  const ysdk = await getYsdk();
+  if (!ysdk) {
+    return;
+  }
+  const call = adsDisabled ? ysdk.adv.hideBannerAdv() : ysdk.adv.showBannerAdv();
+  await call.catch(() => {});
+}
+
 // ponytail: Yandex's own review guidelines cap fullscreen interstitials at once per minute,
 // so 60s doubles as both "our" throttle and the platform floor - no config needed.
 const MIN_INTERVAL_MS = 60_000;
