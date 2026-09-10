@@ -91,6 +91,16 @@ of these cost real debugging time - recorded here so the next person doesn't rep
   fallback mode. Used by `lib/support.ts`'s `isOnKnownPlatform()` to gate the post-purchase
   thank-you animation (shown unconditionally when neither a real Yandex nor a VK launch is
   detected, since there's no real payment to check in that case).
+- **Loading the SDK from the absolute `https://yandex.ru/games/sdk/v2` URL once the build is
+  actually uploaded to Yandex's own hosting throws `Error: YaGames is already defined` from
+  inside the SDK's own script**, reproduced live in a fresh incognito load (not a cache/dev
+  artifact). Yandex's docs (`sdk-about`) specify two *different* URLs depending on hosting: a
+  relative `/sdk.js` for a build hosted on Yandex's own servers (their platform apparently injects
+  the SDK there itself), and the absolute CDN URL only for a custom domain. Requesting the
+  absolute URL from a build that's also being served by Yandex's own hosting double-loads it.
+  Fixed by gating the script src on `NEXT_PUBLIC_YANDEX_HOSTED` (see README.md's release
+  instructions) - only the zip actually built for upload uses `/sdk.js`; local dev and any other
+  hosting keep the absolute URL, since `/sdk.js` 404s everywhere except Yandex's own hosting.
 
 ## Next.js static export + relative asset paths
 

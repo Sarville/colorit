@@ -36,6 +36,17 @@ yarn next export
 
 This will create an `out` directory with static files that can be hosted (e.g. On GitHub pages or Amazon S3) to create the site.
 
+For the build that actually gets zipped and uploaded to Yandex Games, set
+`NEXT_PUBLIC_YANDEX_HOSTED=true` - it switches the SDK `<script>` tag from the absolute
+`https://yandex.ru/games/sdk/v2` to the relative `/sdk.js` Yandex's own hosting also injects,
+avoiding a "YaGames is already defined" double-load error once actually live there:
+```bash
+NEXT_PUBLIC_YANDEX_HOSTED=true yarn next build
+yarn next export
+```
+Leave it unset for local dev/testing (`/sdk.js` 404s anywhere but Yandex's own hosting, which
+would leave `window.YaGames` undefined there).
+
 For the VK build specifically, set `NEXT_PUBLIC_REQUIRE_VK=true` before building - this omits the
 Yandex Games SDK script and makes the page refuse to render outside a real VK launch:
 ```bash

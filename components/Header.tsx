@@ -10,6 +10,18 @@ import {useLanguage} from "@/i18n/LanguageContext";
 // build must never emit it.
 const REQUIRE_VK = process.env.NEXT_PUBLIC_REQUIRE_VK === "true";
 
+// Yandex's own docs (sdk-about) split this into two *different* URLs, not one: a relative
+// "/sdk.js" for a build actually hosted on Yandex's own servers, and the absolute
+// "https://yandex.ru/games/sdk/v2" only for a custom domain. Games hosted on Yandex apparently
+// also get the SDK injected by their platform at that relative path regardless - so a build that
+// (like every build here, historically) always requests the absolute URL gets it loaded twice
+// once actually uploaded there, throwing the SDK's own "YaGames is already defined" error
+// (confirmed live: reproduced in a fresh incognito load against the real uploaded build, not a
+// caching/dev artifact). "/sdk.js" 404s anywhere else (localhost, this repo's own GitHub Pages
+// preview, a custom domain), so this only flips on for the zip actually built for upload - see
+// README.md's release instructions for the required build command.
+const YANDEX_HOSTED = process.env.NEXT_PUBLIC_YANDEX_HOSTED === "true";
+
 export default function Header() {
   const {t} = useLanguage();
   return (
@@ -25,7 +37,7 @@ export default function Header() {
            Deliberately synchronous - the game's own bundle scripts are deferred, so this must block
            and run first to guarantee window.YaGames exists before the app hydrates. */
         // eslint-disable-next-line @next/next/no-sync-scripts
-        <script src="https://yandex.ru/games/sdk/v2"></script>
+        <script src={YANDEX_HOSTED ? "/sdk.js" : "https://yandex.ru/games/sdk/v2"}></script>
       )}
     </Head>
   )
