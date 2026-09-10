@@ -23,8 +23,9 @@ export function MessageModal(props: MessageModalProps) {
       <p className={styles.subline}>{t("tapToContinue")}</p>
     </div>
   }
+  const containedClass = props.message === "locked" ? styles.modalContained : "";
   return (
-    <div className={styles.modal} onClick={props.onClick}>
+    <div className={`${styles.modal} ${containedClass}`} onClick={props.onClick}>
       <div className={`col-panel ${styles.card}`}>
         <div className={`${styles.badge} col-circle col-circle--accent`}>
           <div className={styles[props.message]}></div>

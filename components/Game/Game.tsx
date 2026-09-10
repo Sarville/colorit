@@ -27,6 +27,11 @@ export function Game() {
   // levels[pack][levelNumber] whenever a daily level is being played.
   const dailyEntry = dailyPlayIndex !== null ? (dailyTiles[dailyPlayIndex] ?? null) : null;
   const activeLevel: Level = dailyEntry ? dailyEntry.level : levels[pack][levelNumber];
+  // Daily tiles are never locked (see lib/dailyLevels.ts) - only a normal-pack level can be.
+  // The MessageModal("locked") overlay blocks clicks visually, but it's just a DOM element a
+  // devtools user can hide (display:none) or remove - onClick below is the real gate, checked
+  // independently of whatever's currently covering the board on screen.
+  const isLocked = !dailyEntry && levelProgress[pack][levelNumber].status === levelStatus.locked;
 
   const [moves, setMoves] = useState(0);
   const [game, setGame] = useState(loadLevel(activeLevel));
@@ -96,7 +101,12 @@ export function Game() {
   }, [levelNumber, dailyPlayIndex, handleReset]);
 
   useEffect(() => {
-    if (!gameIsWon) {
+    // Re-derive the win from the actual board fill rather than trusting the gameIsWon flag on
+    // its own - it's set by onClick right after a real move, but a devtools user can flip React
+    // state directly without ever playing a legal move. checkGameIsWon(game) is the same check
+    // onClick already ran, just re-run against the current board as the source of truth before
+    // this effect banks a completion/score/unlock.
+    if (!gameIsWon || !checkGameIsWon(game)) {
       return;
     }
     if (dailyEntry) {
@@ -117,7 +127,7 @@ export function Game() {
       }
       changeLevelProgress(newProgress)
     }
-  }, [gameIsWon, levelProgress, levelNumber, moves, changeLevelProgress, pack, dailyEntry, changeDailyBest]);
+  }, [gameIsWon, game, levelProgress, levelNumber, moves, changeLevelProgress, pack, dailyEntry, changeDailyBest]);
 
   function goHome() {
     setGameIsWon(false)
@@ -168,6 +178,9 @@ export function Game() {
   }
 
   function onClick(x: number, y: number) {
+    if (isLocked) {
+      return;
+    }
     if (game[x][y].modifier !== Modifier.none) {
       playClick()
       setMoves(moves => moves + 1)
@@ -323,12 +336,12 @@ export function Game() {
       </div>
       <div className={`${styles.level} ${isSidebar ? styles.levelSidebar : ""}`}>
         {gameIsWon ? <MessageModal onClick={incrementLevelNumber} message={"complete"}/> : null}
-        {!dailyEntry && levelProgress[pack][levelNumber].status === "locked" ? <MessageModal onClick={undefined} message={"locked"}/> : null}
         <div
           ref={gameBoardRef}
           className={`col-panel ${styles.gameBoard}`}
           style={{"--rows": visibleRowCount, "--cols": game[0]?.length ?? 1} as CSSProperties}
         >
+          {isLocked ? <MessageModal onClick={undefined} message={"locked"}/> : null}
           {game.map((row, index) => (
             index < firstVisibleRow || index > lastVisibleRow ? null : (
               <div key={index} className={styles.row}>

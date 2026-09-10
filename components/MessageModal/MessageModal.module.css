@@ -12,6 +12,19 @@
   box-sizing: border-box;
 }
 
+/* Locked-level variant: rendered inside .gameBoard (which is position:relative via
+   .col-panel), so this dims only the board itself, not the header above it - the header's
+   home/back button must stay clickable, since a locked level otherwise had no in-app way
+   back out. */
+.modalContained {
+  position: absolute;
+  /* border-radius isn't an inherited property by default, but the `inherit` keyword can still
+     be forced - pulls .gameBoard's (.col-panel) 28px radius so this overlay's corners match
+     the rounded panel it sits inside instead of sticking out square past them. */
+  border-radius: inherit;
+  overflow: hidden;
+}
+
 .card {
   width: 100%;
   max-width: 320px;
