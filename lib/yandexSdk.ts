@@ -68,3 +68,11 @@ export function getYsdk(): Promise<YandexSdk | null> {
   }
   return ysdkPromise;
 }
+
+// getYsdk() resolves non-null even completely outside Yandex Games (see the comment on
+// `environment` above) - callers that need to know "is there a real Yandex player/cloud save to
+// talk to" (not just "did the SDK script load") should use this instead.
+export async function getRealYsdk(): Promise<YandexSdk | null> {
+  const ysdk = await getYsdk();
+  return ysdk?.environment?.app?.id ? ysdk : null;
+}

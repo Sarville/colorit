@@ -9,6 +9,7 @@ import {MusicOffIcon, MusicOnIcon, SoundOffIcon, SoundOnIcon} from "@/components
 import {ChevronRightIcon} from "@/components/icons";
 import {Splashes, defaultSplashes} from "@/components/Splashes";
 import {FlagButton} from "@/components/FlagButton";
+import {ResetProgressModal} from "@/components/ResetProgress/ResetProgressModal";
 import styles from "./Settings.module.css";
 
 const previewLayout: Array<Array<Color>> = [
@@ -16,10 +17,11 @@ const previewLayout: Array<Array<Color>> = [
   [Color.green, Color.blue, Color.indigo],
 ];
 
-export function Settings({onOpenTutorial, onClose, onSupportAuthor, adsDisabled}: {
+export function Settings({onOpenTutorial, onClose, onSupportAuthor, onResetProgress, adsDisabled}: {
   onOpenTutorial: () => void,
   onClose: () => void,
   onSupportAuthor: () => void,
+  onResetProgress: () => void,
   adsDisabled: boolean,
 }) {
   const {language, setLanguage, t} = useLanguage();
@@ -28,6 +30,12 @@ export function Settings({onOpenTutorial, onClose, onSupportAuthor, adsDisabled}
   const [musicOn, setMusicOn] = useState(isMusicEnabled());
   const [soundVolume, setSoundVolumeState] = useState(getSoundVolume());
   const [musicVolume, setMusicVolumeState] = useState(getMusicVolume());
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  function handleResetConfirm() {
+    setShowResetConfirm(false);
+    onResetProgress();
+  }
 
   function toggleSound() {
     const next = !soundOn;
@@ -145,6 +153,10 @@ export function Settings({onOpenTutorial, onClose, onSupportAuthor, adsDisabled}
             </div>
 
             <div className={styles.row}>
+              <FlagButton variant="tag" onClick={() => { playClick(); setShowResetConfirm(true); }}>{t("resetProgress")}</FlagButton>
+            </div>
+
+            <div className={styles.row}>
               <FlagButton variant="tag" onClick={toggleLanguage}>{t("language")}</FlagButton>
               <span className={styles.icon} onClick={toggleLanguage}>
                 {language.toUpperCase()}
@@ -158,6 +170,9 @@ export function Settings({onOpenTutorial, onClose, onSupportAuthor, adsDisabled}
           {t("back")}
         </FlagButton>
       </div>
+      {showResetConfirm ? (
+        <ResetProgressModal onConfirm={handleResetConfirm} onClose={() => setShowResetConfirm(false)}/>
+      ) : null}
     </div>
   );
 }

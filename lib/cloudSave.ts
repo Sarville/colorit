@@ -1,4 +1,4 @@
-import {getYsdk} from "./yandexSdk";
+import {getRealYsdk} from "./yandexSdk";
 import {getVkBridge} from "./vkSdk";
 
 const PROGRESS_KEY = "levelProgress";
@@ -9,8 +9,12 @@ const PROGRESS_KEY = "levelProgress";
 // own environment (local dev, GitHub Pages) so progress still persists there.
 // key defaults to level progress but any of these platforms' key-value storage also backs other
 // small cross-device flags (e.g. the "ads disabled" purchase entitlement in lib/support.ts).
+// getRealYsdk() (not getYsdk()) - plain getYsdk() resolves to a non-null "lite" SDK even in local
+// dev with no Yandex parent frame at all, so using it here meant every save/load in dev silently
+// went through that fake player instead of falling through to localStorage, and nothing persisted
+// across reloads.
 export async function loadProgress<T>(key: string = PROGRESS_KEY): Promise<T | null> {
-  const ysdk = await getYsdk();
+  const ysdk = await getRealYsdk();
   if (ysdk) {
     try {
       const player = await ysdk.getPlayer({scopes: false});
@@ -36,7 +40,7 @@ export async function loadProgress<T>(key: string = PROGRESS_KEY): Promise<T | n
 }
 
 export async function saveProgress(progress: unknown, key: string = PROGRESS_KEY) {
-  const ysdk = await getYsdk();
+  const ysdk = await getRealYsdk();
   if (ysdk) {
     try {
       const player = await ysdk.getPlayer({scopes: false});

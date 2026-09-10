@@ -65,6 +65,12 @@ export const translations = {
     supportFailedText: "Не получилось оформить покупку. Попробуйте ещё раз чуть позже.",
     supportThankYouNote: "А ещё в знак благодарности на главном экране появится эта анимация:",
     close: "Закрыть",
+    score: "Ваш счёт",
+    dailyLevels: "Ежедневные",
+    resetProgress: "Сброс прогресса",
+    resetProgressWarning: "Весь прогресс по уровням будет удалён без возможности восстановления.",
+    resetProgressConfirm: "Сбросить",
+    cancel: "Отмена",
   },
   en: {
     title: "Color It",
@@ -110,6 +116,12 @@ export const translations = {
     supportFailedText: "The purchase didn't go through. Please try again in a moment.",
     supportThankYouNote: "As a thank-you, this animation will also appear on the main screen:",
     close: "Close",
+    score: "Your score",
+    dailyLevels: "Daily",
+    resetProgress: "Reset progress",
+    resetProgressWarning: "All level progress will be permanently deleted. This cannot be undone.",
+    resetProgressConfirm: "Reset",
+    cancel: "Cancel",
   },
 } satisfies Record<Language, Record<string, string>>;
 

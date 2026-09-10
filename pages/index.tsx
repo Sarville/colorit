@@ -22,11 +22,17 @@ import {playGameMusic, playMenuMusic} from "@/lib/music";
 import {loadProgress, saveProgress} from "@/lib/cloudSave";
 import {isSignedIn, openAuthDialog} from "@/lib/yandexAuth";
 import {isAdsDisabled, purchaseSupportAuthor, resetSupportState, restoreYandexPurchases} from "@/lib/support";
+import {
+  clearDailyHistory, DailyHistoryData, DailyTile, ensureTodayEntry, flattenDailyHistory,
+  peekDailyHistory, recordDailyBest, saveDailyHistory, totalDailyScore,
+} from "@/lib/dailyLevels";
+import {totalPackScore} from "@/lib/scoring";
 
 export const enum screens {
   MainMenu = "MainMenu",
   SelectPack = "SelectPack",
   SelectLevel = "SelectLevel",
+  DailyLevels = "DailyLevels",
   Game = "Game",
   Settings = "Settings",
   Tutorial = "Tutorial",
@@ -105,6 +111,10 @@ export const LevelContext = createContext({
   lastExitedLevel: null as number | null,
   changeLastExitedLevel: (_level: number | null) => {},
   openSettings: () => {},
+  dailyTiles: [] as Array<DailyTile>,
+  dailyPlayIndex: null as number | null,
+  changeDailyPlayIndex: (_index: number | null) => {},
+  changeDailyBest: (_date: string, _slotIndex: number, _moves: number) => {},
 });
 
 // Set only for the games.sarville.online/vk build - VK's own hosting (vk.com/app<id>) already
@@ -126,6 +136,13 @@ export default function Home() {
   const [screenBeforeSettings, setScreenBeforeSettings] = useState(screens.MainMenu);
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [adsDisabled, setAdsDisabled] = useState(false);
+  const [dailyHistory, setDailyHistory] = useState<DailyHistoryData | null>(null);
+  const [dailyPlayIndex, setDailyPlayIndex] = useState<number | null>(null);
+  const dailyTiles = dailyHistory ? flattenDailyHistory(dailyHistory) : [];
+
+  useEffect(() => {
+    peekDailyHistory().then(setDailyHistory);
+  }, []);
 
   useEffect(() => {
     // Testing-only: `?resetProgress` in the URL skips the load entirely, so levelProgress stays
@@ -223,6 +240,34 @@ export default function Home() {
     setLevelProgress(() => progress);
   }
 
+  function changeDailyPlayIndex(index: number | null) {
+    setDailyPlayIndex(index);
+  }
+
+  function changeDailyBest(date: string, slotIndex: number, moves: number) {
+    setDailyHistory((prev) => {
+      if (!prev) return prev;
+      const next = recordDailyBest(prev, date, slotIndex, moves);
+      saveDailyHistory(next);
+      return next;
+    });
+  }
+
+  function enterDaily() {
+    ensureTodayEntry().then((history) => {
+      setDailyHistory(history);
+      navigateTo(screens.DailyLevels);
+    });
+  }
+
+  function resetProgress() {
+    setLevelProgress(levelProgressDefault);
+    setLastExitedLevel(null);
+    setDailyPlayIndex(null);
+    setDailyHistory({days: []});
+    clearDailyHistory();
+  }
+
   // Every in-app navigation pushes a history entry tagged with the screen (and, for the two
   // full-screen modals, which one) it lands on, so the browser/OS back button (which otherwise
   // just leaves the page - it's a SPA with no routing) steps back through the app instead. Going
@@ -296,6 +341,10 @@ export default function Home() {
     navigateTo(screens.Settings)
   }
 
+  // @ts-ignore - levelProgress's Community entry doesn't fit ScoredPack, totalPackScore only
+  // reads the Easy/Medium/Hard keys it's typed for.
+  const totalScore = totalPackScore(levelProgress) + totalDailyScore(dailyHistory);
+
   if (vkRequiredButMissing) {
     return (
       <main style={{display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", textAlign: "center", padding: "2rem"}}>
@@ -320,6 +369,10 @@ export default function Home() {
             lastExitedLevel,
             changeLastExitedLevel,
             openSettings,
+            dailyTiles,
+            dailyPlayIndex,
+            changeDailyPlayIndex,
+            changeDailyBest,
           }}
         >
           <Header/>
@@ -341,16 +394,19 @@ export default function Home() {
                 showSignIn={signedIn === false}
                 onSignIn={handleSignIn}
                 adsDisabled={adsDisabled}
+                score={totalScore}
               />
             ) : null}
-            {currentScreen === screens.SelectPack ? <SelectPack/> : null}
+            {currentScreen === screens.SelectPack ? <SelectPack onSelectDaily={enterDaily}/> : null}
             {currentScreen === screens.SelectLevel ? <LevelPicker/> : null}
+            {currentScreen === screens.DailyLevels ? <LevelPicker daily/> : null}
             {currentScreen === screens.Game ? <Game/> : null}
             {currentScreen === screens.Settings ? (
               <Settings
                 onOpenTutorial={() => navigateTo(screens.Tutorial)}
                 onClose={() => navigateTo(screenBeforeSettings)}
                 onSupportAuthor={openSupportModal}
+                onResetProgress={resetProgress}
                 adsDisabled={adsDisabled}
               />
             ) : null}

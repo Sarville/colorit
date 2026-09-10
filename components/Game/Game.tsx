@@ -1,5 +1,5 @@
 import {useCallback, useContext, useEffect, useRef, useState, type CSSProperties} from "react";
-import {Color, Modifier, Square, SquareProps} from "../Square/Square";
+import {Color, Modifier, Square} from "../Square/Square";
 import styles from "./Game.module.css";
 import {LevelContext, levels, levelOptimal, screens} from "@/pages";
 import {MessageModal} from "@/components/MessageModal/MessageModal";
@@ -9,214 +9,27 @@ import {maybeShowLevelCompleteAd} from "@/lib/ads";
 import {playClick, playWon} from "@/lib/sound";
 import {GearIcon, HomeIcon, ResetIcon, TriangleLeftIcon, TriangleRightIcon} from "@/components/icons";
 import {Splashes} from "@/components/Splashes";
+import {checkGameIsWon, loadLevel, updateGame, type Level} from "@/lib/gameEngine";
 
-export type Level = Array<Array<SquareProps>>;
-
-type Coordinate = {
-  x: number;
-  y: number;
-};
-
-const includesCoordinate = function (
-  elements: Array<Coordinate>,
-  x: number,
-  y: number
-) {
-  return elements.some((element) => element.x === x && element.y === y);
-}
-
-const checkGameIsWon = function (gameState: Level) {
-  const freshGameState = loadLevel(gameState)
-  let won = true;
-  freshGameState.forEach((row) => {
-    row.forEach((square) => {
-      if (square.color !== square.targetColor) {
-        won = false;
-      }
-    });
-  });
-  return won
-}
-
-const getNextSquare = function (x: number, y: number, direction: Modifier, gameState: Level) {
-  const freshGameState = loadLevel(gameState)
-  let nextSquare = undefined;
-  try {
-    if (
-      direction === Modifier.up ||
-      direction === Modifier.rotateUp
-    ) {
-      nextSquare = freshGameState[x - 1][y];
-    } else if (
-      direction === Modifier.right ||
-      direction === Modifier.rotateRight
-    ) {
-      nextSquare = freshGameState[x][y + 1];
-    } else if (
-      direction === Modifier.down ||
-      direction === Modifier.rotateDown
-    ) {
-      nextSquare = freshGameState[x + 1][y];
-    } else if (
-      direction === Modifier.left ||
-      direction === Modifier.rotateLeft
-    ) {
-      nextSquare = gameState[x][y - 1];
-    } else if (direction === Modifier.none) {
-      nextSquare = freshGameState[x][y];
-    }
-  } catch (err) {
-  }
-  return nextSquare;
-}
-
-const loadLevel = function (props: Level) {
-  const levelState: Array<Array<SquareProps>> = [];
-  for (const [x, row] of props.entries()) {
-    levelState.push([]);
-    for (const [y, square] of row.entries()) {
-      levelState[x].push(
-        {
-          key: `x${x}y${y}`,
-          color: square.color,
-          targetColor: square.targetColor,
-          modifier: square.modifier,
-          x: x,
-          y: y,
-        }
-      );
-    }
-  }
-  return levelState;
-}
-
-const updateGame = function (x: number, y: number, gameState: Level) {
-  const freshGameState = loadLevel(gameState)
-  if (
-    freshGameState[x][y].modifier === Modifier.up ||
-    freshGameState[x][y].modifier === Modifier.right ||
-    freshGameState[x][y].modifier === Modifier.down ||
-    freshGameState[x][y].modifier === Modifier.left ||
-    freshGameState[x][y].modifier === Modifier.rotateUp ||
-    freshGameState[x][y].modifier === Modifier.rotateRight ||
-    freshGameState[x][y].modifier === Modifier.rotateDown ||
-    freshGameState[x][y].modifier === Modifier.rotateLeft
-  ) {
-    let nextSquare = getNextSquare(x, y, freshGameState[x][y].modifier, freshGameState);
-    const arrowColour = freshGameState[x][y].color;
-    const targetColor = nextSquare?.color == arrowColour ? Color.none : arrowColour;
-    const replaceColour = nextSquare?.color == arrowColour ? arrowColour : Color.none;
-    try {
-      while (
-        // The next square exists on the grid
-      nextSquare !== undefined &&
-      // and it's not a blank space
-      nextSquare.targetColor !== Color.none &&
-      // and it's not a modifier square
-      nextSquare.modifier === Modifier.none &&
-      // and it's either empty, and we are adding colors
-      nextSquare.color === replaceColour) {
-        freshGameState[nextSquare.x!][nextSquare.y!].color = targetColor
-        nextSquare = getNextSquare(
-          nextSquare.x!,
-          nextSquare.y!,
-          freshGameState[x][y].modifier,
-          freshGameState
-        );
-      }
-      // If it was a rotating arrow, turn it
-      if (freshGameState[x][y].modifier === Modifier.rotateUp) {
-        freshGameState[x][y].modifier = Modifier.rotateRight
-      } else if (freshGameState[x][y].modifier === Modifier.rotateRight) {
-        freshGameState[x][y].modifier = Modifier.rotateDown
-      } else if (freshGameState[x][y].modifier === Modifier.rotateDown) {
-        freshGameState[x][y].modifier = Modifier.rotateLeft
-      } else if (freshGameState[x][y].modifier === Modifier.rotateLeft) {
-        freshGameState[x][y].modifier = Modifier.rotateUp
-      }
-    } catch (error) {
-      console.error(`${error} ${nextSquare}`);
-    }
-  } else if (freshGameState[x][y].modifier === Modifier.bomb) {
-    const squaresToUpdate = [
-      // Top row
-      getNextSquare(x - 1, y - 1, Modifier.none, freshGameState),
-      getNextSquare(x - 1, y, Modifier.none, freshGameState),
-      getNextSquare(x - 1, y + 1, Modifier.none, freshGameState),
-      // Middle row
-      getNextSquare(x, y - 1, Modifier.none, freshGameState),
-      getNextSquare(x, y, Modifier.none, freshGameState),
-      getNextSquare(x, y + 1, Modifier.none, freshGameState),
-      // Bottom row
-      getNextSquare(x + 1, y - 1, Modifier.none, freshGameState),
-      getNextSquare(x + 1, y, Modifier.none, freshGameState),
-      getNextSquare(x + 1, y + 1, Modifier.none, freshGameState),
-    ];
-    const targetColor = freshGameState[x][y].color;
-    try {
-      squaresToUpdate.forEach((square) => {
-        if (square !== undefined && square.targetColor !== Color.none) {
-          freshGameState[square.x!][square.y!].color = targetColor
-          freshGameState[square.x!][square.y!].modifier = Modifier.none
-        }
-      });
-    } catch (error) {
-      console.error(`${error}`);
-    }
-  } else if (freshGameState[x][y].modifier === Modifier.circle) {
-    const queue: Array<Coordinate> = [{x: x, y: y}];
-    const visited: Array<Coordinate> = [];
-    // If any neighbour is empty, but has a target color
-    const fill = (
-      (getNextSquare(x, y, Modifier.up, freshGameState)?.color === Color.none &&
-        getNextSquare(x, y, Modifier.up, freshGameState)?.targetColor !== Color.none) ||
-      (getNextSquare(x, y, Modifier.right, freshGameState)?.color === Color.none &&
-        getNextSquare(x, y, Modifier.right, freshGameState)?.targetColor !== Color.none) ||
-      (getNextSquare(x, y, Modifier.down, freshGameState)?.color === Color.none &&
-        getNextSquare(x, y, Modifier.down, freshGameState)?.targetColor !== Color.none) ||
-      (getNextSquare(x, y, Modifier.left, freshGameState)?.color === Color.none &&
-        getNextSquare(x, y, Modifier.left, freshGameState)?.targetColor !== Color.none)
-    )
-    const targetColor = fill ? freshGameState[x][y].color : Color.none;
-    const replaceColour = fill ? Color.none : freshGameState[x][y].color;
-    while (queue.length) {
-      const current = queue.pop()!;
-      // Check the 4 neighbour and add them to the queue
-      [Modifier.up, Modifier.right, Modifier.down, Modifier.left].forEach(
-        (neighbour) => {
-          const nextSquare = getNextSquare(current.x, current.y, neighbour, freshGameState);
-          if (
-            nextSquare !== undefined &&
-            nextSquare.color === replaceColour &&
-            nextSquare.modifier === Modifier.none &&
-            nextSquare.targetColor !== Color.none &&
-            !includesCoordinate(visited, nextSquare.x!, nextSquare.y!) &&
-            !includesCoordinate(queue, nextSquare.x!, nextSquare.y!)
-          ) {
-            queue.push({x: nextSquare.x!, y: nextSquare.y!});
-          }
-        }
-      );
-      if (freshGameState[current.x][current.y].modifier === Modifier.none) {
-        freshGameState[current.x][current.y].color = targetColor
-      }
-      visited.push({x: current.x, y: current.y})
-    }
-  }
-  // Finally
-  return freshGameState
-}
+export type {Level};
 
 
 export function Game() {
   const {
     levelNumber, changeLevelNumber, levelProgress, changeLevelProgress, pack, changeCurrentScreen,
-    changeLastExitedLevel, openSettings,
+    changeLastExitedLevel, openSettings, dailyTiles, dailyPlayIndex, changeDailyPlayIndex, changeDailyBest,
   } = useContext(
     LevelContext
   );
+
+  // A daily tile carries its own board + optimal-move count (see lib/dailyLevels.ts) rather than
+  // indexing into one of the 3 normal packs, so every lookup below goes through this instead of
+  // levels[pack][levelNumber] whenever a daily level is being played.
+  const dailyEntry = dailyPlayIndex !== null ? (dailyTiles[dailyPlayIndex] ?? null) : null;
+  const activeLevel: Level = dailyEntry ? dailyEntry.level : levels[pack][levelNumber];
+
   const [moves, setMoves] = useState(0);
-  const [game, setGame] = useState(loadLevel(levels[pack][levelNumber]));
+  const [game, setGame] = useState(loadLevel(activeLevel));
   const [gameIsWon, setGameIsWon] = useState(false);
   const {t, language} = useLanguage();
 
@@ -273,34 +86,45 @@ export function Game() {
 
   const handleReset = useCallback(() => {
     setGameIsWon(false)
-    setGame(loadLevel(levels[pack][levelNumber]));
+    setGame(loadLevel(activeLevel));
     setMoves(0);
-  }, [pack, levelNumber])
+  }, [activeLevel])
 
   useEffect(() => {
-    // Reset the game every time the level changes
+    // Reset the game every time the level (or, in daily mode, the tile) changes
     handleReset()
-  }, [levelNumber, handleReset]);
+  }, [levelNumber, dailyPlayIndex, handleReset]);
 
   useEffect(() => {
-    if (gameIsWon) {
-      if (levelProgress[pack][levelNumber].best === null || moves < levelProgress[pack][levelNumber].best!) {
-        const newProgress = structuredClone(levelProgress)
-        newProgress[pack][levelNumber].best = moves
-        newProgress[pack][levelNumber].status = levelStatus.complete
-        // Unlock the next 5 levels
-        for (let i = 1; i < Math.min(newProgress[pack].length - levelNumber, 6); i++) {
-          if (newProgress[pack][levelNumber + i].status === levelStatus.locked) {
-            newProgress[pack][levelNumber + i].status = levelStatus.unlocked
-          }
-        }
-        changeLevelProgress(newProgress)
-      }
+    if (!gameIsWon) {
+      return;
     }
-  }, [gameIsWon, levelProgress, levelNumber, moves, changeLevelProgress, pack]);
+    if (dailyEntry) {
+      if (dailyEntry.best === null || moves < dailyEntry.best) {
+        changeDailyBest(dailyEntry.date, dailyEntry.slotIndex, moves)
+      }
+      return;
+    }
+    if (levelProgress[pack][levelNumber].best === null || moves < levelProgress[pack][levelNumber].best!) {
+      const newProgress = structuredClone(levelProgress)
+      newProgress[pack][levelNumber].best = moves
+      newProgress[pack][levelNumber].status = levelStatus.complete
+      // Unlock the next 5 levels
+      for (let i = 1; i < Math.min(newProgress[pack].length - levelNumber, 6); i++) {
+        if (newProgress[pack][levelNumber + i].status === levelStatus.locked) {
+          newProgress[pack][levelNumber + i].status = levelStatus.unlocked
+        }
+      }
+      changeLevelProgress(newProgress)
+    }
+  }, [gameIsWon, levelProgress, levelNumber, moves, changeLevelProgress, pack, dailyEntry, changeDailyBest]);
 
   function goHome() {
     setGameIsWon(false)
+    if (dailyEntry) {
+      changeCurrentScreen(screens.DailyLevels)
+      return;
+    }
     changeLastExitedLevel(levelNumber)
     changeCurrentScreen(screens.SelectLevel)
   }
@@ -309,6 +133,14 @@ export function Game() {
     // Unset gameIsWon before changing level, so we don't accidentally mark the level as complete
     // when the new game is loaded before gameIsWon is recalculated
     setGameIsWon(false)
+    if (dailyEntry) {
+      if (dailyPlayIndex! + 1 === dailyTiles.length) {
+        changeCurrentScreen(screens.DailyLevels)
+      } else {
+        changeDailyPlayIndex(dailyPlayIndex! + 1)
+      }
+      return;
+    }
     if (levelNumber + 1 === levels[pack].length) {
       changeLastExitedLevel(levelNumber)
       changeCurrentScreen(screens.SelectLevel)
@@ -319,6 +151,14 @@ export function Game() {
 
   function decrementLevelNumber() {
     setGameIsWon(false)
+    if (dailyEntry) {
+      if (dailyPlayIndex! === 0) {
+        changeCurrentScreen(screens.DailyLevels)
+      } else {
+        changeDailyPlayIndex(dailyPlayIndex! - 1)
+      }
+      return;
+    }
     if (levelNumber === 0) {
       changeLastExitedLevel(levelNumber)
       changeCurrentScreen(screens.SelectLevel)
@@ -357,11 +197,14 @@ export function Game() {
   const lastVisibleRow = game.length - 1 - [...game].reverse().findIndex((row) => !isRowBlank(row));
   const visibleRowCount = firstVisibleRow === -1 ? game.length : lastVisibleRow - firstVisibleRow + 1;
 
-  const best = levelProgress[pack][levelNumber].best;
-  const optimal = levelOptimal[pack][levelNumber];
+  const best = dailyEntry ? dailyEntry.best : levelProgress[pack][levelNumber].best;
+  const optimal = dailyEntry ? dailyEntry.optimal : levelOptimal[pack][levelNumber];
   // One of the 3 pre-cropped slogan stickers (see public/images/slogan_<lang>_<1-3>.webp),
   // cycled by level so it doesn't repeat on every screen.
-  const sloganIndex = (levelNumber % 3) + 1;
+  const sloganIndex = ((dailyEntry ? dailyPlayIndex! : levelNumber) % 3) + 1;
+  // Daily levels show their position in the (newest-day-first) list, not their (meaningless to
+  // the player) index inside whichever pool entry they came from.
+  const displayLevelNumber = dailyEntry ? dailyPlayIndex! + 1 : levelNumber + 1;
 
   const previousButton = (
     <button onClick={() => { playClick(); decrementLevelNumber(); }} className={`col-circle ${styles.navCircle}`} aria-label="prev">
@@ -409,7 +252,7 @@ export function Game() {
           <>
             <div className={styles.sidebarTopRow}>
               {previousButton}
-              <p className={`col-heading ${styles.levelLabel}`}>{t("level")} {levelNumber + 1}</p>
+              <p className={`col-heading ${styles.levelLabel}`}>{t("level")} {displayLevelNumber}</p>
               {nextButton}
             </div>
             {iconRow}
@@ -434,7 +277,7 @@ export function Game() {
               {previousButton}
               <div className={styles.levelLabelWrap}>
                 <img src="./images/brush_paint.webp" alt="" className={styles.levelLabelBg}/>
-                <p className={styles.levelLabel}>{t("level")} {levelNumber + 1}</p>
+                <p className={styles.levelLabel}>{t("level")} {displayLevelNumber}</p>
               </div>
               {nextButton}
             </div>
@@ -480,7 +323,7 @@ export function Game() {
       </div>
       <div className={`${styles.level} ${isSidebar ? styles.levelSidebar : ""}`}>
         {gameIsWon ? <MessageModal onClick={incrementLevelNumber} message={"complete"}/> : null}
-        {levelProgress[pack][levelNumber].status === "locked" ? <MessageModal onClick={undefined} message={"locked"}/> : null}
+        {!dailyEntry && levelProgress[pack][levelNumber].status === "locked" ? <MessageModal onClick={undefined} message={"locked"}/> : null}
         <div
           ref={gameBoardRef}
           className={`col-panel ${styles.gameBoard}`}

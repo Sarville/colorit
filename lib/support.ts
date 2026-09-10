@@ -1,4 +1,4 @@
-import {getYsdk} from "./yandexSdk";
+import {getYsdk, getRealYsdk} from "./yandexSdk";
 import {getVkBridge, isVkEnvironment} from "./vkSdk";
 import {loadProgress, saveProgress} from "./cloudSave";
 
@@ -51,11 +51,7 @@ export async function restoreYandexPurchases(): Promise<void> {
 // than rejecting), so `!== null` alone can't tell real Yandex apart from local/standalone - only
 // `environment.app.id` being non-empty means an actual Yandex parent frame answered.
 async function isOnKnownPlatform(): Promise<boolean> {
-  if (isVkEnvironment()) {
-    return true;
-  }
-  const ysdk = await getYsdk();
-  return !!ysdk?.environment?.app?.id;
+  return isVkEnvironment() || (await getRealYsdk()) !== null;
 }
 
 // The thank-you animation on the main menu doubles as proof of purchase, so it must never even
