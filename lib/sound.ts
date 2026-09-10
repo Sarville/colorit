@@ -41,48 +41,90 @@ export function setSoundVolume(volume: number) {
   localStorage.setItem(VOLUME_KEY, String(volume));
 }
 
-// A fresh `new Audio(src).play()` per call has to decode the file from scratch every time,
-// which shows up as a noticeable lag on a rapid-fire sound like the click. Click gets a small
-// pool of pre-loaded elements instead, cycled round-robin so overlapping clicks don't cut
-// each other off. The one-off win fanfare doesn't need this - it never fires back-to-back.
-const CLICK_SRC = "./sounds/click.wav";
-const CLICK_POOL_SIZE = 4;
-let clickPool: Array<HTMLAudioElement> = [];
-let clickPoolIndex = 0;
+// `new Audio(src).play()` has to spin up a fresh media pipeline every call, which in
+// webviews (e.g. VK) shows up as audible lag even with the file preloaded. Decoding once
+// into an in-memory AudioBuffer and firing it through Web Audio removes that per-play cost -
+// playback starts as soon as start(0) is called, and concurrent plays don't cut each other off.
+let audioCtx: AudioContext | null = null;
 
-function getClickPool(): Array<HTMLAudioElement> {
-  if (clickPool.length === 0) {
-    for (let i = 0; i < CLICK_POOL_SIZE; i++) {
-      const el = new Audio(CLICK_SRC);
-      el.preload = "auto";
-      el.load();
-      clickPool.push(el);
-    }
+function getAudioContext(): AudioContext | null {
+  if (typeof window === "undefined") {
+    return null;
   }
-  return clickPool;
+  if (!audioCtx) {
+    const Ctor = window.AudioContext || (window as any).webkitAudioContext;
+    if (!Ctor) {
+      return null;
+    }
+    audioCtx = new Ctor();
+  }
+  return audioCtx;
+}
+
+const CLICK_SRC = "./sounds/click.wav";
+const WON_SRC = "./sounds/won.wav";
+
+const buffers = new Map<string, AudioBuffer>();
+const loading = new Map<string, Promise<AudioBuffer | null>>();
+
+function loadBuffer(ctx: AudioContext, src: string): Promise<AudioBuffer | null> {
+  let promise = loading.get(src);
+  if (!promise) {
+    promise = fetch(src)
+      .then((res) => res.arrayBuffer())
+      .then((data) => ctx.decodeAudioData(data))
+      .then((buffer) => {
+        buffers.set(src, buffer);
+        return buffer;
+      })
+      .catch(() => null);
+    loading.set(src, promise);
+  }
+  return promise;
+}
+
+// Kick off decoding as soon as the module loads, so buffers are ready before the first click.
+{
+  const ctx = getAudioContext();
+  if (ctx) {
+    loadBuffer(ctx, CLICK_SRC);
+    loadBuffer(ctx, WON_SRC);
+  }
+}
+
+function playBuffer(ctx: AudioContext, buffer: AudioBuffer) {
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  const gain = ctx.createGain();
+  gain.gain.value = getSoundVolume() / 100;
+  source.connect(gain).connect(ctx.destination);
+  source.start(0);
+}
+
+function play(src: string) {
+  if (!isSoundEnabled() || suppressed) {
+    return;
+  }
+  const ctx = getAudioContext();
+  if (!ctx) {
+    return;
+  }
+  if (ctx.state === "suspended") {
+    ctx.resume().catch(() => {});
+  }
+  const buffer = buffers.get(src);
+  if (buffer) {
+    playBuffer(ctx, buffer);
+  } else {
+    // Not decoded yet (e.g. very first interaction) - play as soon as it lands.
+    loadBuffer(ctx, src).then((b) => b && playBuffer(ctx, b));
+  }
 }
 
 export function playClick() {
-  if (!isSoundEnabled() || suppressed) {
-    return;
-  }
-  const pool = getClickPool();
-  const el = pool[clickPoolIndex];
-  clickPoolIndex = (clickPoolIndex + 1) % pool.length;
-  try {
-    el.currentTime = 0;
-  } catch {
-    // Not seekable yet (still loading) - playing from wherever it is beats not playing at all.
-  }
-  el.volume = getSoundVolume() / 100;
-  el.play().catch(() => {});
+  play(CLICK_SRC);
 }
 
 export function playWon() {
-  if (!isSoundEnabled() || suppressed) {
-    return;
-  }
-  const audio = new Audio("./sounds/won.wav");
-  audio.volume = getSoundVolume() / 100;
-  audio.play().catch(() => {});
+  play(WON_SRC);
 }
