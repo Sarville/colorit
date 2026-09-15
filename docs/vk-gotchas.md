@@ -76,9 +76,23 @@ Payments, though, are a genuinely separate channel per VK's docs
 [notifications/ok](https://dev.vk.ru/ru/api/payments/notifications/ok)):
 
 - **`get_item` for an OK purchase still arrives on VK's classic POST endpoint**
-  (`ops/vk-payments/server.js`, signed with `VK_APP_SECRET`) - the request's `site` param says
-  `"ok"` so the server can answer with the OK-currency price instead of the VK one. Only the
+  (`ops/vk-payments/server.js`, signed with `VK_APP_SECRET`) - the request's `site` param says the
+  platform so the server can answer with the OK-currency price instead of the VK one. Only the
   *purchase confirmation* uses a separate channel (next point).
+- **Shipped bug, found from a real failed purchase (`VKWebAppShowOrderBoxFailed`, generic "cannot
+  process payment right now" on the OK side): `site` arrives as `"OK"` (uppercase), not `"ok"`.**
+  A real captured request looked like
+  `{"notification_type":"get_item","item":"support_author","site":"OK","method":"callbacks.getCustomProductInfo",...}`
+  - a case-sensitive `params.site === "ok"` check silently always fell through to the VK
+  price/currency for every real OK attempt, so OK was being told the item costs 20 (the VK voice
+  price) instead of 100 OKi, which OK apparently treats as broken/unprocessable rather than just
+  wrong. Fixed by lowercasing before comparing (`getItemInfo()` in `server.js`) - **this is exactly
+  the kind of thing "verify against a real request" below is warning about**; don't assume any
+  platform-supplied enum-like string arrives in the casing the docs imply.
+  Diagnosed via temporary `console.log`s of the raw request/response in the webhook (`docker logs
+  vk-payments-colorit`) after Caddy's access log alone (URI + headers only, no POST body) couldn't
+  show what was actually being exchanged - add logging like this again for any future "webhook
+  looks right but the platform still errors" situation rather than guessing from docs alone.
 - **OK's purchase confirmation is a different notification entirely**: a GET request (not POST) to
   its own URL (`/vk/colorit-payments/ok` here, set as "URL для платёжных уведомлений Одноклассников"
   in the dev.vk.ru cabinet, distinct from the classic URL used above), signed with the *same*

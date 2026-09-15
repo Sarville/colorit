@@ -6,7 +6,7 @@ const crypto = require("crypto");
 
 const SECRET = "test-app-secret";
 process.env.VK_APP_SECRET = SECRET;
-const {isValidSig, handleOkPaymentNotification, isAcceptableReferer, isValidLaunchParams} = require("./server.js");
+const {isValidSig, handleOkPaymentNotification, isAcceptableReferer, isValidLaunchParams, getItemInfo} = require("./server.js");
 
 function signLaunchParams(params) {
   const joined = Object.keys(params).sort().map((k) => `${k}=${params[k]}`).join("&");
@@ -92,6 +92,15 @@ function fakeRes() {
 
   const tampered = new URLSearchParams({...vkParams, sign: vkSign, vk_user_id: "2"});
   assert.strictEqual(isValidLaunchParams(tampered), false);
+}
+
+// getItemInfo: OK's real `site` value is uppercase ("OK") - this is the shipped bug (found from a
+// real failed purchase) that a naive === "ok" comparison misses.
+{
+  assert.strictEqual(getItemInfo("OK").price, 100);
+  assert.strictEqual(getItemInfo("ok").price, 100);
+  assert.strictEqual(getItemInfo("vk").price, 20);
+  assert.strictEqual(getItemInfo(undefined).price, 20);
 }
 
 console.log("ok");

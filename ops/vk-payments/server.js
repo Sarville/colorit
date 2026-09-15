@@ -13,6 +13,18 @@ const ITEM_TITLE = "Поддержать автора";
 const ITEM_PRICE = 20; // голосов
 const ITEM_PRICE_OK = 100; // ОКи
 
+// `site` tells apart a get_item lookup triggered from the VK client vs the OK client - both arrive
+// on the same classic endpoint (OK only gets its own separate channel for the purchase
+// *confirmation*, not this catalog lookup), so this is the one place that needs to answer with the
+// right currency's price for whichever platform is asking. Confirmed from a real captured OK
+// request: `site` arrives as "OK" (uppercase), not "ok" - a case-sensitive comparison here silently
+// fell through to the VK price/currency for every real OK purchase attempt (shipped bug, found from
+// live traffic after an actual purchase failed - lowercased explicitly now, not left to luck).
+function getItemInfo(site) {
+  const price = (site || "").toLowerCase() === "ok" ? ITEM_PRICE_OK : ITEM_PRICE;
+  return {title: ITEM_TITLE, price, item_id: ITEM_ID};
+}
+
 // VK's classic Payments API signature: md5 of every param except sig, sorted by name and
 // concatenated as name=value with no separator, plus the app's secret key appended. Also used for
 // OK's `get_item` notification (same classic POST channel/secret regardless of which platform the
@@ -169,13 +181,8 @@ const server = http.createServer((req, res) => {
     // response as a real notification (there's no separate state to fake here).
     const notificationType = (params.notification_type || "").replace(/_test$/, "");
 
-    // `site` tells apart a get_item lookup triggered from the VK client vs the OK client - both
-    // arrive on this same classic endpoint (OK only gets its own separate channel for the purchase
-    // *confirmation*, not this catalog lookup), so this is the one place that needs to answer with
-    // the right currency's price for whichever platform is asking.
     if (notificationType === "get_item" && params.item === ITEM_ID) {
-      const price = params.site === "ok" ? ITEM_PRICE_OK : ITEM_PRICE;
-      const response = {response: {title: ITEM_TITLE, price, item_id: ITEM_ID}};
+      const response = {response: getItemInfo(params.site)};
       console.log("classic payments get_item response:", JSON.stringify(response));
       return res.end(JSON.stringify(response));
     }
@@ -192,4 +199,4 @@ if (require.main === module) {
   server.listen(3000, () => console.log("vk-payments listening on :3000"));
 }
 
-module.exports = {isValidSig, handleOkPaymentNotification, isAcceptableReferer, isValidLaunchParams};
+module.exports = {isValidSig, handleOkPaymentNotification, isAcceptableReferer, isValidLaunchParams, getItemInfo};
