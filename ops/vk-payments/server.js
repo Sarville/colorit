@@ -96,7 +96,13 @@ function isAcceptableReferer(referer) {
 function handleOkPaymentNotification(searchParams, res) {
   const params = Object.fromEntries(searchParams);
 
+  // Temporary diagnostic logging while this flow is unverified against real traffic - see the note
+  // at the matching log call in the classic POST handler below.
+  const {sig: _sig, ...loggableParams} = params;
+  console.log("ok confirmation request:", JSON.stringify(loggableParams));
+
   function fail(code, msg) {
+    console.log("ok confirmation rejected:", code, msg);
     res.writeHead(200, {"Content-Type": "application/json", "Invocation-error": String(code)});
     res.end(JSON.stringify({error_code: code, error_msg: msg, error_data: null}));
   }
@@ -147,7 +153,14 @@ const server = http.createServer((req, res) => {
     const params = Object.fromEntries(new URLSearchParams(body));
     res.writeHead(200, {"Content-Type": "application/json"});
 
+    // Temporary diagnostic logging while the OK purchase flow is unverified against real traffic
+    // (see docs/vk-gotchas.md's OK payments section) - params only, sig omitted (it's a hash, not
+    // a secret, but there's no need to log it). Remove once the flow is confirmed working.
+    const {sig: _sig, ...loggableParams} = params;
+    console.log("classic payments request:", JSON.stringify(loggableParams));
+
     if (!isValidSig(params)) {
+      console.log("classic payments: invalid signature");
       return res.end(JSON.stringify({error: {error_code: 10, error_msg: "Invalid signature"}}));
     }
 
@@ -162,7 +175,9 @@ const server = http.createServer((req, res) => {
     // the right currency's price for whichever platform is asking.
     if (notificationType === "get_item" && params.item === ITEM_ID) {
       const price = params.site === "ok" ? ITEM_PRICE_OK : ITEM_PRICE;
-      return res.end(JSON.stringify({response: {title: ITEM_TITLE, price, item_id: ITEM_ID}}));
+      const response = {response: {title: ITEM_TITLE, price, item_id: ITEM_ID}};
+      console.log("classic payments get_item response:", JSON.stringify(response));
+      return res.end(JSON.stringify(response));
     }
 
     if (notificationType === "order_status_change" && params.status === "chargeable") {
