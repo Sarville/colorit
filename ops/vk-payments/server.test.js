@@ -6,7 +6,13 @@ const crypto = require("crypto");
 
 const SECRET = "test-app-secret";
 process.env.VK_APP_SECRET = SECRET;
-const {isValidSig, handleOkPaymentNotification, isAcceptableReferer} = require("./server.js");
+const {isValidSig, handleOkPaymentNotification, isAcceptableReferer, isValidLaunchParams} = require("./server.js");
+
+function signLaunchParams(params) {
+  const joined = Object.keys(params).sort().map((k) => `${k}=${params[k]}`).join("&");
+  return crypto.createHmac("sha256", SECRET).update(joined).digest("base64")
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
 
 function sign(params) {
   const joined = Object.keys(params).sort().map((k) => `${k}=${params[k]}`).join("");
@@ -61,6 +67,31 @@ function fakeRes() {
   assert.strictEqual(isAcceptableReferer("https://ok.ru/game/123"), true);
   assert.strictEqual(isAcceptableReferer("https://m.ok.ru/game/123"), true);
   assert.strictEqual(isAcceptableReferer("https://evil.example/"), false);
+}
+
+// isValidLaunchParams: accepts a fresh VK launch (vk_ts in seconds) and a fresh OK launch (vk_ts
+// in *milliseconds* - real OK traffic sends it this way, unlike VK; this was live-blocking every
+// real OK player with a 403 despite a fully valid signature until fixed), rejects a stale one and
+// a tampered param.
+{
+  const nowSeconds = Math.floor(Date.now() / 1000);
+
+  const vkParams = {vk_user_id: "1", vk_ts: String(nowSeconds)};
+  const vkSign = signLaunchParams(vkParams);
+  const vk = new URLSearchParams({...vkParams, sign: vkSign});
+  assert.strictEqual(isValidLaunchParams(vk), true);
+
+  const okParams = {vk_user_id: "1", vk_ts: String(nowSeconds * 1000), vk_client: "ok"};
+  const okSign = signLaunchParams(okParams);
+  const ok = new URLSearchParams({...okParams, sign: okSign});
+  assert.strictEqual(isValidLaunchParams(ok), true);
+
+  const staleParams = {vk_user_id: "1", vk_ts: String(nowSeconds - 9 * 60 * 60)}; // 9h old
+  const stale = new URLSearchParams({...staleParams, sign: signLaunchParams(staleParams)});
+  assert.strictEqual(isValidLaunchParams(stale), false);
+
+  const tampered = new URLSearchParams({...vkParams, sign: vkSign, vk_user_id: "2"});
+  assert.strictEqual(isValidLaunchParams(tampered), false);
 }
 
 console.log("ok");

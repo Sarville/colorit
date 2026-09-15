@@ -44,11 +44,25 @@ no OK-specific branch needed:
   fires for VK or OK players.
 - **Progress sync** (`lib/cloudSave.ts`) - falls through to `VKWebAppStorageGet`/`VKWebAppStorageSet`
   for any non-Yandex bridge environment, OK included, same as the purchase call.
-- **Found and fixed while checking this**: the launch gate's soft Referer check
-  (`isAcceptableReferer` in `ops/vk-payments/server.js`) only allowed `vk.com`/`.vk.com`/
-  `vk.ru`/`.vk.ru` hosts - a real OK launch embeds the game's iframe from `ok.ru`, so this would
-  have 403'd every genuine OK player outright, even with a fully valid launch-params signature.
-  Added `ok.ru`/`.ok.ru` to the allowlist.
+- **Found while checking this (soft check, not what actually blocked real traffic)**: the launch
+  gate's Referer check (`isAcceptableReferer` in `ops/vk-payments/server.js`) only allowed
+  `vk.com`/`.vk.com`/`vk.ru`/`.vk.ru` hosts - a real OK launch embeds the game's iframe from
+  `ok.ru`. Added `ok.ru`/`.ok.ru` to the allowlist as a precaution, though it turned out not to be
+  the actual live blocker (see next point) - real OK Referers observed in production were
+  `id.vk.ru`, already allowed.
+- **The actual live blocker, found from real Caddy access logs after real OK launches were still
+  403ing post-deploy**: `isValidLaunchParams`'s freshness check assumed `vk_ts` is Unix
+  **seconds**, matching every VK launch (e.g. `vk_ts=1789477153`). Real OK launches send `vk_ts`
+  in Unix **milliseconds** instead (`vk_ts=1789483279190` at almost the same real time) - the
+  signature itself was valid (OK signs whatever raw string value it sends, same HMAC formula), but
+  computing `Date.now()/1000 - ts` against a millisecond value produced an astronomically negative
+  age and failed the freshness bound every single time. Fixed by treating any `vk_ts` above `1e12`
+  as milliseconds and dividing by 1000 before the age check - a real seconds timestamp for "now" is
+  ~1.8e9, nothing legitimate reaches 1e12 in seconds for centuries. **Lesson**: a "fix" that only
+  addresses what looks suspicious in code (the Referer allowlist) without checking real captured
+  traffic can still ship broken - the access logs (`docker logs caddy-games`, `http.log.access` in
+  the Caddyfile's `log` directive) were what actually revealed the real cause here, not more
+  reading of the docs.
 - **Not verified against a real OK launch** - same caveat as the payments flow below: OK's own
   docs mention "some differences in available APIs and functionality" between the VK and OK hosts
   without specifics, and one (older, possibly outdated) source claimed VK ID/VK Pay specifically

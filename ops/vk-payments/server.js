@@ -50,7 +50,15 @@ function isValidLaunchParams(searchParams) {
   if (expected !== sign) {
     return false;
   }
-  const ts = Number(searchParams.get("vk_ts"));
+  let ts = Number(searchParams.get("vk_ts"));
+  // OK sends vk_ts in *milliseconds*, not seconds like VK - confirmed from real captured OK
+  // launches (e.g. vk_ts=1789483279190 vs a VK launch's vk_ts=1789477153 at almost the same real
+  // time). Without this, every real OK launch computed a multi-billion-second-old age and got
+  // rejected here, even with a fully valid signature. A seconds timestamp for "now" is ~1.8e9;
+  // nothing legitimate reaches 1e12 in seconds for centuries, so treat anything past that as ms.
+  if (ts > 1e12) {
+    ts = ts / 1000;
+  }
   const ageSeconds = Date.now() / 1000 - ts;
   return Boolean(ts) && ageSeconds >= -60 && ageSeconds <= LAUNCH_MAX_AGE_SECONDS;
 }
@@ -169,4 +177,4 @@ if (require.main === module) {
   server.listen(3000, () => console.log("vk-payments listening on :3000"));
 }
 
-module.exports = {isValidSig, handleOkPaymentNotification, isAcceptableReferer};
+module.exports = {isValidSig, handleOkPaymentNotification, isAcceptableReferer, isValidLaunchParams};
