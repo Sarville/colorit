@@ -1,12 +1,33 @@
 import {getYsdk, getRealYsdk} from "./yandexSdk";
-import {getVkBridge, isVkEnvironment} from "./vkSdk";
+import {getVkBridge, isVkEnvironment, isOkPlatform} from "./vkSdk";
 import {loadProgress, saveProgress} from "./cloudSave";
 
 // This is the product/item ID to register in each platform's dashboard:
 // Yandex Games cabinet -> Monetization -> In-app purchases -> id "support_author", price 100 RUB.
-// VK app cabinet -> Payments -> this is passed as `item` to VKWebAppShowOrderBox; its price (100
-// votes) is returned by the payments callback server, not set in the VK dashboard.
+// VK app cabinet -> Payments -> this is passed as `item` to VKWebAppShowOrderBox for both VK and OK
+// (same call, same bridge); its price is returned by the payments callback server per-platform, not
+// set in the VK dashboard - see ops/vk-payments/server.js's ITEM_PRICE/ITEM_PRICE_OK.
 export const SUPPORT_PRODUCT_ID = "support_author";
+
+// Chosen prices per platform's own currency (not 1:1 with RUB or with each other) - must stay in
+// sync with ops/vk-payments/server.js's ITEM_PRICE/ITEM_PRICE_OK, which are what actually gets
+// charged; these are only for the button label.
+export const VK_ITEM_PRICE = 20; // голосов
+export const OK_ITEM_PRICE = 100; // ОКи
+
+// Yandex purchases show their own real-currency price via the platform's own purchase dialog, so
+// "100 ₽" here is just the label for that case (and for local/standalone dev, where nothing is
+// actually charged) - VK and OK show their own currency's amount instead, since a mislabeled amount
+// would misrepresent what the player is about to be charged.
+export function supportPriceLabel(): string {
+  if (isOkPlatform()) {
+    return `${OK_ITEM_PRICE} ОКов`;
+  }
+  if (isVkEnvironment()) {
+    return `${VK_ITEM_PRICE} голосов`;
+  }
+  return "100 ₽";
+}
 
 const ADS_DISABLED_KEY = "adsDisabled";
 

@@ -9,8 +9,11 @@ no CI for this.
   and the VK launch-auth gate (`forward_auth` to `vk-payments-colorit`).
 - `vk-payments/server.js` → lives on the server at `/opt/games/vk-payments/server.js`,
   bind-mounted into the `vk-payments-colorit` container as `/server.js` (runs on `node:22-alpine`,
-  `node /server.js`, listens on :3000). Handles the VK payments webhook and the launch-params
-  signature check used by the Caddy gate above. Needs `VK_APP_SECRET` set in the container's
+  `node /server.js`, listens on :3000). Handles the VK payments webhook (also serves OK's
+  `get_item` lookups, same classic channel) and the launch-params signature check used by the Caddy
+  gate above, plus OK's separate purchase-confirmation callback at `/vk/colorit-payments/ok` (signed
+  with the same `VK_APP_SECRET` - OK doesn't have a secret of its own here, it's one app in the
+  dev.vk.ru cabinet with two notification URLs). Needs `VK_APP_SECRET` set in the container's
   environment (not in this repo - configured directly on the server).
 
 See [`../docs/vk-gotchas.md`](../docs/vk-gotchas.md) before changing either of these - both have
@@ -29,6 +32,7 @@ ssh server-games "docker exec caddy-games caddy reload --config /etc/caddy/Caddy
 
 # vk-payments/server.js
 node --check ops/vk-payments/server.js
+node ops/vk-payments/server.test.js
 ssh server-games "cp /opt/games/vk-payments/server.js /opt/games/vk-payments/server.js.bak-$(date +%Y%m%d%H%M%S)"
 scp ops/vk-payments/server.js server-games:/opt/games/vk-payments/server.js.new
 ssh server-games "cp /opt/games/vk-payments/server.js.new /opt/games/vk-payments/server.js && rm -f /opt/games/vk-payments/server.js.new"

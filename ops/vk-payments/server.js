@@ -1,13 +1,23 @@
 const http = require("http");
 const crypto = require("crypto");
 
+// OK (Odnoklassniki) is configured as a platform under this same dev.vk.ru app - one app, one
+// secret, just two different notification URLs (classic VK one + OK's own, see below). Confirmed
+// against the live server: only VK_APP_SECRET is set there, no separate OK secret exists.
 const APP_SECRET = process.env.VK_APP_SECRET || "";
 const ITEM_ID = "support_author";
 const ITEM_TITLE = "Поддержать автора";
-const ITEM_PRICE = 100; // votes ("голоса")
+// Chosen prices per platform's currency (not 1:1 with RUB or with each other - see
+// docs/vk-gotchas.md's OK payments section for why). Keep these two in sync with lib/support.ts's
+// VK_ITEM_PRICE/OK_ITEM_PRICE, which mirror them for the client-side button label.
+const ITEM_PRICE = 20; // голосов
+const ITEM_PRICE_OK = 100; // ОКи
 
 // VK's classic Payments API signature: md5 of every param except sig, sorted by name and
-// concatenated as name=value with no separator, plus the app's secret key appended.
+// concatenated as name=value with no separator, plus the app's secret key appended. Also used for
+// OK's `get_item` notification (same classic POST channel/secret regardless of which platform the
+// purchase originates on) and for OK's own confirmation notification (handleOkPaymentNotification
+// below) - same formula, same APP_SECRET, just a different set of params being signed.
 function isValidSig(params) {
   if (!APP_SECRET) {
     return false;
@@ -63,6 +73,36 @@ function isAcceptableReferer(referer) {
   }
 }
 
+// OK's purchase-confirmation notification (apiok.ru `callbacks.payment`): a GET request with its
+// own param set (uid/transaction_id/transaction_time/amount/product_code/sig/...), signed with the
+// same APP_SECRET as isValidSig above (one app, one secret - see the note at APP_SECRET's
+// declaration). Response shape is OK-specific - JSON `true` on success (not an object), a JSON
+// error object plus an `Invocation-error` header on failure. Not verified against a real captured
+// OK notification yet (unlike the VK launch-params signature, which was) - check a real request
+// from OK's own "Тестовый" probe before relying on this in production, the same way
+// docs/vk-gotchas.md describes doing for the VK side.
+function handleOkPaymentNotification(searchParams, res) {
+  const params = Object.fromEntries(searchParams);
+
+  function fail(code, msg) {
+    res.writeHead(200, {"Content-Type": "application/json", "Invocation-error": String(code)});
+    res.end(JSON.stringify({error_code: code, error_msg: msg, error_data: null}));
+  }
+
+  if (!isValidSig(params)) {
+    return fail(1001, "CALLBACK_INVALID_SIGNATURE: invalid sig");
+  }
+  if (!params.uid || !params.transaction_id || !params.transaction_time || !params.amount) {
+    return fail(1001, "CALLBACK_INVALID_PAYMENT: missing required field");
+  }
+  if (params.product_code !== ITEM_ID || Number(params.amount) !== ITEM_PRICE_OK) {
+    return fail(1001, "CALLBACK_INVALID_PAYMENT: unknown item or price");
+  }
+
+  res.writeHead(200, {"Content-Type": "application/json"});
+  res.end("true");
+}
+
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://placeholder");
 
@@ -74,6 +114,15 @@ const server = http.createServer((req, res) => {
     const ok = isValidLaunchParams(url.searchParams) && isAcceptableReferer(req.headers.referer);
     res.writeHead(ok ? 200 : 403);
     return res.end();
+  }
+
+  // OK's purchase-confirmation notification is a *separate* channel from VK's classic scheme
+  // above: a GET request (not POST), its own param set/signature secret, and its own response
+  // shape - set as the app's "URL для платёжных уведомлений Одноклассников" in the dev.vk.ru
+  // cabinet, distinct from the classic URL above (kept on the same process/port, just a different
+  // path, since there's no reason to run a second container for one extra route).
+  if (req.method === "GET" && url.pathname === "/vk/colorit-payments/ok") {
+    return handleOkPaymentNotification(url.searchParams, res);
   }
 
   if (req.method !== "POST") {
@@ -95,8 +144,13 @@ const server = http.createServer((req, res) => {
     // response as a real notification (there's no separate state to fake here).
     const notificationType = (params.notification_type || "").replace(/_test$/, "");
 
+    // `site` tells apart a get_item lookup triggered from the VK client vs the OK client - both
+    // arrive on this same classic endpoint (OK only gets its own separate channel for the purchase
+    // *confirmation*, not this catalog lookup), so this is the one place that needs to answer with
+    // the right currency's price for whichever platform is asking.
     if (notificationType === "get_item" && params.item === ITEM_ID) {
-      return res.end(JSON.stringify({response: {title: ITEM_TITLE, price: ITEM_PRICE, item_id: ITEM_ID}}));
+      const price = params.site === "ok" ? ITEM_PRICE_OK : ITEM_PRICE;
+      return res.end(JSON.stringify({response: {title: ITEM_TITLE, price, item_id: ITEM_ID}}));
     }
 
     if (notificationType === "order_status_change" && params.status === "chargeable") {
@@ -107,4 +161,8 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(3000, () => console.log("vk-payments listening on :3000"));
+if (require.main === module) {
+  server.listen(3000, () => console.log("vk-payments listening on :3000"));
+}
+
+module.exports = {isValidSig, handleOkPaymentNotification};

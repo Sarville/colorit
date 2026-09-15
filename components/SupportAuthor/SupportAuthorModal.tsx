@@ -2,6 +2,7 @@ import {useState} from "react";
 import {useLanguage} from "@/i18n/LanguageContext";
 import {playClick} from "@/lib/sound";
 import {FlagButton} from "@/components/FlagButton";
+import {supportPriceLabel} from "@/lib/support";
 import styles from "./SupportAuthorModal.module.css";
 
 export function SupportAuthorModal({adsDisabled, onSupport, onClose}: {
@@ -26,13 +27,15 @@ export function SupportAuthorModal({adsDisabled, onSupport, onClose}: {
     <div className={styles.modal}>
       <div className={`col-panel ${styles.dialog}`}>
         <p>{adsDisabled ? t("supportAfterText") : t("supportBeforeText")}</p>
-        <p className={styles.thankYouNote}>
-          {t("supportThankYouNote")}
-          <img src="./images/thankyou_small.webp" alt="" aria-hidden="true" className={styles.thankYouPreview}/>
-        </p>
+        {adsDisabled ? null : (
+          <p className={styles.thankYouNote}>
+            {t("supportThankYouNote")}
+            <img src="./images/thankyou_small.webp" alt="" aria-hidden="true" className={styles.thankYouPreview}/>
+          </p>
+        )}
         {failed ? <p className={styles.error}>{t("supportFailedText")}</p> : null}
         <FlagButton dense disabled={purchasing} onClick={handleSupport}>
-          {adsDisabled ? t("supportAgainButton") : t("supportButton")}
+          {t("supportButtonPrefix")} {supportPriceLabel()}
         </FlagButton>
         <FlagButton dense ghost onClick={() => { playClick(); onClose(); }}>{t("close")}</FlagButton>
       </div>

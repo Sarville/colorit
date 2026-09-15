@@ -22,6 +22,51 @@ of these cost real debugging time - recorded here so the next person doesn't rep
   md5 vs HMAC-SHA256 - even though they use the same app secret (`VK_APP_SECRET`). Don't confuse
   them.
 
+## OK (Odnoklassniki) payments
+
+Colorit's VK Mini App can also run inside OK (OK integrated the VK Mini Apps platform), so the same
+`VKWebAppShowOrderBox` client call and the same `vk_user_id`/`sign` launch params work unchanged for
+an OK launch - OK adds one extra launch param, `vk_client=ok`, on top of the standard VK ones rather
+than replacing them, so `isVkEnvironment()`/`isValidLaunchParams()` didn't need any changes.
+
+Payments, though, are a genuinely separate channel per VK's docs
+([virtual-goods/ok](https://dev.vk.ru/ru/api/payments/virtual-goods/ok),
+[notifications/ok](https://dev.vk.ru/ru/api/payments/notifications/ok)):
+
+- **`get_item` for an OK purchase still arrives on VK's classic POST endpoint**
+  (`ops/vk-payments/server.js`, signed with `VK_APP_SECRET`) - the request's `site` param says
+  `"ok"` so the server can answer with the OK-currency price instead of the VK one. Only the
+  *purchase confirmation* uses a separate channel (next point).
+- **OK's purchase confirmation is a different notification entirely**: a GET request (not POST) to
+  its own URL (`/vk/colorit-payments/ok` here, set as "URL для платёжных уведомлений Одноклассников"
+  in the dev.vk.ru cabinet, distinct from the classic URL used above), signed with the *same*
+  `VK_APP_SECRET` as the classic channel - confirmed on the live server, only `VK_APP_SECRET` is set
+  there, this is one dev.vk.ru app with two notification URLs, not two separate app secrets - and
+  answered with `true` (a bare JSON boolean, not an object) on success or a `{error_code, error_msg}`
+  object plus an `Invocation-error` header on failure.
+- The signature **formula** is identical to VK's classic one (sort params except `sig`, concatenate
+  as `key=value` with no separator, append the secret, md5) - confirmed from OK's own published PHP
+  example, not just inferred from VK's docs.
+- **Not yet verified against a real captured OK notification** - unlike the VK launch-params
+  signature (which was checked against a real captured URL before relying on it, see below), the OK
+  payment flow above was built from dev.vk.ru's docs plus OK's public API docs/examples, since no
+  live OK app was available to capture a real request from while implementing this. Before this goes
+  live, use OK's own "Тестовый" probe in the payments cabinet (same idea as VK's, see the
+  `_test`-suffix note below) and check the real request against `ops/vk-payments/server.test.js`'s
+  expectations - particularly the exact param names/casing and whether the response format needs to
+  be XML instead of JSON (the dashboard has a "Версия API" setting that may select this).
+- **Neither platform's currency is 1:1 with RUB, and they're not 1:1 with each other either** -
+  `ITEM_PRICE`/`ITEM_PRICE_OK` in `server.js` (and the matching `VK_ITEM_PRICE`/`OK_ITEM_PRICE` in
+  `lib/support.ts`, used only for the button label) were originally both set to `100`, which was
+  wrong: VK's own "Тестовый" purchase dialog was showing "Стоимость: 100 голосов" - the real
+  per-platform purchase-pack cabinets show a 100 RUB equivalent as 10 voices / 80 OKi (buying a
+  single unit, no bulk-pack discount); the actual chosen prices (`ITEM_PRICE`/`ITEM_PRICE_OK`) are
+  currently set a bit above that baseline, at 20 voices / 100 OKi. Get the RUB-equivalent baseline
+  from the actual cabinet, not by
+  assuming any of "RUB amount", "VK votes" and "OK OKi" convert 1:1 - there's no API method to look
+  up the exchange rate (checked `payment.getUserAccountBalance` - that's just a user's balance, not
+  a rate), it's only visible in each platform's own purchase-pack UI.
+
 ## Auth / launch params (stopping the game from loading outside VK)
 
 - `vk_user_id` being present in the URL **proves nothing on its own** - it's just a copyable query
