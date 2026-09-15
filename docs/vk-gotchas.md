@@ -29,6 +29,34 @@ Colorit's VK Mini App can also run inside OK (OK integrated the VK Mini Apps pla
 an OK launch - OK adds one extra launch param, `vk_client=ok`, on top of the standard VK ones rather
 than replacing them, so `isVkEnvironment()`/`isValidLaunchParams()` didn't need any changes.
 
+### SDK / auth / progress sync beyond payments
+
+Everything else the game does through `@vkontakte/vk-bridge` rides on the same shared code path,
+no OK-specific branch needed:
+
+- **SDK init** (`lib/vkSdk.ts`'s `initVkBridge()`, one `VKWebAppInit` call) - same call, same
+  bridge package, for both platforms.
+- **Auth** - there isn't a separate VK/OK auth step at all in this codebase. Identity is just
+  whatever `vk_user_id` the launch params carry (VK/OK's iframe context is already tied to a
+  logged-in account by the platform itself) - the explicit sign-in flow
+  (`lib/yandexAuth.ts`/`AuthPrompt`) only exists because Yandex Games players can be anonymous
+  ("lite" mode). `isSignedIn()` returns `null` (not `false`) outside Yandex, so the prompt never
+  fires for VK or OK players.
+- **Progress sync** (`lib/cloudSave.ts`) - falls through to `VKWebAppStorageGet`/`VKWebAppStorageSet`
+  for any non-Yandex bridge environment, OK included, same as the purchase call.
+- **Found and fixed while checking this**: the launch gate's soft Referer check
+  (`isAcceptableReferer` in `ops/vk-payments/server.js`) only allowed `vk.com`/`.vk.com`/
+  `vk.ru`/`.vk.ru` hosts - a real OK launch embeds the game's iframe from `ok.ru`, so this would
+  have 403'd every genuine OK player outright, even with a fully valid launch-params signature.
+  Added `ok.ru`/`.ok.ru` to the allowlist.
+- **Not verified against a real OK launch** - same caveat as the payments flow below: OK's own
+  docs mention "some differences in available APIs and functionality" between the VK and OK hosts
+  without specifics, and one (older, possibly outdated) source claimed VK ID/VK Pay specifically
+  weren't implemented on OK at the time. `VKWebAppInit`/`VKWebAppStorageGet`/`VKWebAppStorageSet`
+  are basic/core bridge methods and likely fine, but this hasn't been tested in OK's real client -
+  worth a real-device check (same as VK's launch-params signature originally got) before treating
+  auth/progress sync as fully confirmed on OK, not just payments.
+
 Payments, though, are a genuinely separate channel per VK's docs
 ([virtual-goods/ok](https://dev.vk.ru/ru/api/payments/virtual-goods/ok),
 [notifications/ok](https://dev.vk.ru/ru/api/payments/notifications/ok)):

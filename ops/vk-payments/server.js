@@ -67,7 +67,11 @@ function isAcceptableReferer(referer) {
   }
   try {
     const host = new URL(referer).hostname;
-    return host === "vk.com" || host.endsWith(".vk.com") || host === "vk.ru" || host.endsWith(".vk.ru");
+    // A real OK Mini App launch embeds this same iframe from ok.ru, not vk.com/vk.ru - without this,
+    // every genuine OK player would be 403'd by this soft check alone, even with a fully valid
+    // launch-params signature (found while reviewing the OK launch path, not from a live report).
+    return host === "vk.com" || host.endsWith(".vk.com") || host === "vk.ru" || host.endsWith(".vk.ru")
+      || host === "ok.ru" || host.endsWith(".ok.ru");
   } catch {
     return false;
   }
@@ -165,4 +169,4 @@ if (require.main === module) {
   server.listen(3000, () => console.log("vk-payments listening on :3000"));
 }
 
-module.exports = {isValidSig, handleOkPaymentNotification};
+module.exports = {isValidSig, handleOkPaymentNotification, isAcceptableReferer};

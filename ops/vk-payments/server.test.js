@@ -6,7 +6,7 @@ const crypto = require("crypto");
 
 const SECRET = "test-app-secret";
 process.env.VK_APP_SECRET = SECRET;
-const {isValidSig, handleOkPaymentNotification} = require("./server.js");
+const {isValidSig, handleOkPaymentNotification, isAcceptableReferer} = require("./server.js");
 
 function sign(params) {
   const joined = Object.keys(params).sort().map((k) => `${k}=${params[k]}`).join("");
@@ -50,6 +50,17 @@ function fakeRes() {
   const wrongPriceRes = fakeRes();
   handleOkPaymentNotification(new URLSearchParams({...wrongPrice, sig: sign(wrongPrice)}), wrongPriceRes);
   assert.strictEqual(JSON.parse(wrongPriceRes.body).error_code, 1001);
+}
+
+// isAcceptableReferer: accepts VK and OK hosts (and their subdomains) plus a missing referer,
+// rejects anything else - a real OK launch's Referer is ok.ru, not vk.com/vk.ru.
+{
+  assert.strictEqual(isAcceptableReferer(undefined), true);
+  assert.strictEqual(isAcceptableReferer("https://vk.com/app123"), true);
+  assert.strictEqual(isAcceptableReferer("https://m.vk.ru/app123"), true);
+  assert.strictEqual(isAcceptableReferer("https://ok.ru/game/123"), true);
+  assert.strictEqual(isAcceptableReferer("https://m.ok.ru/game/123"), true);
+  assert.strictEqual(isAcceptableReferer("https://evil.example/"), false);
 }
 
 console.log("ok");
