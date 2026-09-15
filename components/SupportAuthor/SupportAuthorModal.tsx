@@ -2,7 +2,7 @@ import {useState} from "react";
 import {useLanguage} from "@/i18n/LanguageContext";
 import {playClick} from "@/lib/sound";
 import {FlagButton} from "@/components/FlagButton";
-import {supportPriceLabel} from "@/lib/support";
+import {supportPriceLabel, supportCurrencyName} from "@/lib/support";
 import styles from "./SupportAuthorModal.module.css";
 
 export function SupportAuthorModal({adsDisabled, onSupport, onClose}: {
@@ -33,7 +33,12 @@ export function SupportAuthorModal({adsDisabled, onSupport, onClose}: {
             <img src="./images/thankyou_small.webp" alt="" aria-hidden="true" className={styles.thankYouPreview}/>
           </p>
         )}
-        {failed ? <p className={styles.error}>{t("supportFailedText")}</p> : null}
+        {failed ? (
+          <p className={styles.error}>
+            {t("supportFailedText")}
+            {supportCurrencyName() ? " " + t("supportFailedBalanceHint").replace("{currency}", supportCurrencyName()!) : null}
+          </p>
+        ) : null}
         <FlagButton dense disabled={purchasing} onClick={handleSupport}>
           {t("supportButtonPrefix")} {supportPriceLabel()}
         </FlagButton>

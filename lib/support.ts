@@ -29,6 +29,22 @@ export function supportPriceLabel(): string {
   return "100 ₽";
 }
 
+// `null` on Yandex/standalone, where a failed purchase isn't a balance question (Yandex's own
+// payment dialog handles real-currency/card failures itself) - only VK/OK spend a pre-bought
+// in-platform currency that can plausibly just be insufficient, which is worth telling the player.
+// There's no vk-bridge method to check the player's actual votes/OKi balance beforehand (VK/OK's
+// own order box is supposed to prompt a top-up itself when short - confirmed OK does not always do
+// that, see docs/vk-gotchas.md), so this can only name the currency, not the real balance.
+export function supportCurrencyName(): string | null {
+  if (isOkPlatform()) {
+    return "ОКов";
+  }
+  if (isVkEnvironment()) {
+    return "голосов";
+  }
+  return null;
+}
+
 const ADS_DISABLED_KEY = "adsDisabled";
 
 export async function isAdsDisabled(): Promise<boolean> {
