@@ -11,6 +11,19 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /* VK Mini Apps (m.vk.com mobile web) swallow touch scroll on the document/body itself -
+       a known VKCOM issue (see their now-archived "mvk-mini-apps-scroll-helper" package),
+       reproduced here as "scroll doesn't work" on the level-select screen. Document scroll
+       never gets a chance to run there, but a plain element with its own overflow-y:auto
+       scrolls fine - so #__next below (the Next.js root, wrapping every screen) is made that
+       element instead of relying on html/body scrolling. */
+    height: 100%;
+    overflow: hidden;
+}
+#__next {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 /* Mobile Chrome/Safari default tap highlight and focus ring: a plain rectangle flashed (or
    left lingering after tap) over whatever was tapped, regardless of the element's actual
