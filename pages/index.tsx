@@ -21,7 +21,7 @@ import {initVkBridge, isVkEnvironment} from "@/lib/vkSdk";
 import {playGameMusic, playMenuMusic} from "@/lib/music";
 import {loadProgress, saveProgress} from "@/lib/cloudSave";
 import {isSignedIn, openAuthDialog} from "@/lib/yandexAuth";
-import {isAdsDisabled, purchaseSupportAuthor, resetSupportState, restoreYandexPurchases} from "@/lib/support";
+import {isAdsDisabled, purchaseSupportAuthor, resetSupportState, restorePurchases} from "@/lib/support";
 import {updateStickyBanner} from "@/lib/ads";
 import {
   clearDailyHistory, DailyHistoryData, DailyTile, ensureTodayEntry, flattenDailyHistory,
@@ -188,7 +188,7 @@ export default function Home() {
       updateStickyBanner(false);
       return;
     }
-    restoreYandexPurchases().then(() => isAdsDisabled()).then((disabled) => {
+    restorePurchases().then(() => isAdsDisabled()).then((disabled) => {
       setAdsDisabled(disabled);
       updateStickyBanner(disabled);
     });
@@ -334,7 +334,7 @@ export default function Home() {
   }
 
   async function handleSupportAuthor(): Promise<boolean> {
-    const success = await purchaseSupportAuthor();
+    const success = await purchaseSupportAuthor(adsDisabled);
     if (success) {
       setAdsDisabled(true);
       updateStickyBanner(true);

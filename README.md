@@ -54,6 +54,9 @@ NEXT_PUBLIC_REQUIRE_VK=true yarn next build
 yarn next export
 ```
 
+For the Android (RuStore) build see [docs/android-rustore.md](docs/android-rustore.md) -
+`npm run build:android`, then Gradle in `android/`.
+
 VK Games doesn't accept a zip upload - its developer cabinet only takes an iframe URL, so `out/`
 needs to be hosted somewhere with HTTPS and that URL entered as the app's "Адрес iframe" at
 vk.com/dev (app platform "Встраиваемое приложение", type "Игра").

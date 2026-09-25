@@ -56,3 +56,7 @@ next-env.d.ts
 
 # scratch/output files not meant to be committed
 /tmp
+# Android release signing (never commit)
+/android/keystore.properties
+*.jks
+*.keystore

@@ -1,5 +1,6 @@
 import Head from 'next/head'
 import {useLanguage} from "@/i18n/LanguageContext";
+import {isAndroidApp} from "@/lib/android";
 
 // Same VK-only build gate as pages/index.tsx. The Yandex SDK script isn't just inert outside
 // Yandex Games: merely loading it kicks off its own handshake with a (nonexistent, inside VK)
@@ -7,7 +8,7 @@ import {useLanguage} from "@/i18n/LanguageContext";
 // the page's history/URL to what it assumes is the Yandex-hosted path - breaking every relative
 // asset URL (sounds, music) built after that point. Calling getYsdk() only when needed isn't
 // enough to stop this, since it's triggered by the script tag existing at all - so the VK-only
-// build must never emit it.
+// build must never emit it. The Android (Capacitor) build is offline and has no Yandex parent frame either.
 const REQUIRE_VK = process.env.NEXT_PUBLIC_REQUIRE_VK === "true";
 
 // Yandex's own docs (sdk-about) split this into two *different* URLs, not one: a relative
@@ -31,7 +32,7 @@ export default function Header() {
       <meta name="description" content={t("description")} />
       {/* Relative path: Yandex Games serves the exported build from a sub-path, not domain root */}
       <link rel="shortcut icon" href="./favicon.ico" />
-      {REQUIRE_VK ? null : (
+      {REQUIRE_VK || isAndroidApp ? null : (
         /* Plain <script>, not next/script: must be present in the static-exported HTML itself
            (Yandex's platform check reads the served markup), not injected client-side after hydration.
            Deliberately synchronous - the game's own bundle scripts are deferred, so this must block
